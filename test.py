@@ -8,9 +8,11 @@ from devices import *
 # States and events.
 #-------------------------------------------------------------------------
 
-states = ['wait_for_poke',
-          'reward_available',
-          'reward']
+states = ['intertrial',
+          'trial_start',
+          'stim_release',
+          'reward',
+          'penalty']
 
 events = ['left_poke',
           'right_poke',
