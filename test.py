@@ -3,6 +3,7 @@
 from pyControl.utility import *
 import hardware_definition as hw
 from devices import *
+from machine import SPI
 
 #-------------------------------------------------------------------------
 # States and events.
@@ -15,8 +16,10 @@ states = ['intertrial',
           'penalty']
 
 events = ['motion',
-          'right_poke',
-          'session_timer']
+          'lick',
+          'session_timer',
+          
+          ]
 
 initial_state = 'wait_for_poke'
 
@@ -38,12 +41,12 @@ v.rewards_obtained = 0
 
 # Run start and stop behaviour.
 
-def run_start(): 
-    # Set session timer and turn on houslight.
-    set_timer('session_timer', v.session_duration)  
-    hw.houselight.on()                             
-    
+def  run_start():
+    # Code here is executed when the framework starts running.
+
+
 def run_end():
+    # Code here is executed when the framework stops running.    
     # Turn off all hardware outputs.  
     hw.off()
 
@@ -72,13 +75,17 @@ def reward(event):
     elif event == 'exit':
         hw.right_poke.SOL.off()
 
-# State independent behaviour.
 
+# State independent behaviour.
 def all_states(event):
     # Code here will be executed when any event occurs,
     # irrespective of the state the machine is in.
     # When 'session_timer' event occurs stop framework to end session.
-    if event== 'motion':
-        # read the motion and append the variables
-    if event == 'session_timer':
+    if event == 'motion':
+        # read the motion registers and and append the variables
+        delta_x, delta_y = hw.motionSensor.read_pos()
+        v.delta_x.append(delta_x)
+        v.delta_y.append(delta_y)
+
+    elif event == 'session_timer':
         stop_framework()
