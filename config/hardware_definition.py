@@ -8,7 +8,7 @@ board = Breakout_dseries_1_6()
 
 # Instantiate Devices.
 
-motionSensor= PMW3360DM(board.port_1, rising_event = 'left_poke' , falling_event = 'left_poke_out')
+motionSensor = PMW3360DM(SPI_type='SPI2', eventName='motion', reset: str, MT: str, CS: str)
 right_poke  = Poke(board.port_2, rising_event = 'right_poke' , falling_event = 'right_poke_out')
 center_poke = Poke(board.port_3, rising_event = 'center_poke' , falling_event = 'center_poke_out')
 houselight  = _h.Digital_output(board.port_4.POW_A)
