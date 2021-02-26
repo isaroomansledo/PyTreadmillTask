@@ -14,7 +14,7 @@ states = ['intertrial',
           'reward',
           'penalty']
 
-events = ['left_poke',
+events = ['motion',
           'right_poke',
           'session_timer']
 
@@ -23,6 +23,9 @@ initial_state = 'wait_for_poke'
 #-------------------------------------------------------------------------
 # Variables.
 #-------------------------------------------------------------------------
+
+v.delta_x= []
+v.delta_y= []
 
 v.ratio = 5 # Average number of left pokes needed to make reward available.
 v.session_duration = 1 * hour
@@ -72,6 +75,10 @@ def reward(event):
 # State independent behaviour.
 
 def all_states(event):
+    # Code here will be executed when any event occurs,
+    # irrespective of the state the machine is in.
     # When 'session_timer' event occurs stop framework to end session.
+    if event== 'motion':
+        # read the motion and append the variables
     if event == 'session_timer':
         stop_framework()
