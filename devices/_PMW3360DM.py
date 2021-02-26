@@ -35,3 +35,10 @@ class PMW3360DM():
         self.motion = _h.Digital_input(pin=MT, falling_event=eventName)
         self.reset = _h.Digital_output(pin=reset)
 
+    
+    def read_x(self):
+        pass
+
+    def read_x(self):
+        pass
+
