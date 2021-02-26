@@ -15,7 +15,7 @@ class PMW3360DM():
                  SCK: str = None):
 
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
-        SPIparams = {'baudrate': 1000_000, 'polarity': 0, 'phase': 0,
+        SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 0,
                      'bits': 8, 'firstbit': machine.SPI.MSB}
         if '1' in SPI_type:
             self.SPI = machine.SPI(id=0, **SPIparams)
@@ -26,7 +26,7 @@ class PMW3360DM():
             self.select = _h.Digital_output(pin='W45')
 
         elif 'soft' in SPI_type.lower():
-            self.SPI = machine.SoftSPI(baudrate=500000,
+            self.SPI = machine.SoftSPI(baudrate=500000, polarity=1, phase=0, bits=8, firstbit=machine.SPI.MSB,
                                        sck=machine.Pin(id=SCK, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
                                        mosi=machine.Pin(id=MO, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
                                        miso=machine.Pin(id=MI, mode=machine.Pin.IN))
@@ -36,7 +36,7 @@ class PMW3360DM():
         self.reset = _h.Digital_output(pin=reset)
 
     def read_x(self):
-        pass
+        self.
 
     def read_y(self):
         pass
