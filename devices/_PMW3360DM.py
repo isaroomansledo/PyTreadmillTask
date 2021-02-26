@@ -38,15 +38,15 @@ class PMW3360DM():
     def read_pos(self):
         self.select.on()
         # read Motion register to lock the content of delta registers
-        self.SPI.write(b'02')
-        self.SPI.read(1)
-        self.select.off()
-        pyb.udelay(22)
+        self.read_register(b'02')
 
-        self.SPI.write(b'02')
-        self.SPI.read(1)
-        self.SPI.write(b'02')
-        self.SPI.read(1)
+        delta_x_L = self.read_register(b'03')
+        delta_x_H = self.read_register(b'04')
+        delta_y_L = self.read_register(b'05')
+        delta_y_H = self.read_register(b'06')
+
+        
+
 
     def read_register(self, addrs: bytes):
         self.select.on()
