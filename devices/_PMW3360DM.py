@@ -1,18 +1,20 @@
-import pyb
+import pyb, machine
 import pyControl.hardware as _h
-from devices._SPI import SPI
 
 
 class PMW3360DM():
     # mouse motion sensor.
-    def __init__(self,
-                 MI: _h.DigitalInput,
-                 MO: _h.DigitalOutput,
-                 CS: _h.DigitalOutput,
-                 MT: _h.DigitalInput,
-                 reset: _h.DigitalOutput,
-                 event: str,
-                 ):
+    def __init__(self, SPI_type: str, reset: _h.DigitalOutput, MT: _h.DigitalInput, event: str, MI= None: _h.DigitalInput,
+     MO= None: _h.DigitalOutput, CS= None: _h.DigitalOutput, SCK= None: _h.DigitalOutput):
+
+        # SPI_type = 'SPI0' or 'SPI1' or 'softSPI'
+        if '0' in SPI_type:
+            self.SPI = machine.SPI(id=0)
+        elif '1' in SPI_type:
+            self.SPI = machine.SPI(id=1)
+        elif 'soft' in SPI_type.lower():
+            self.SPI = machine.SoftSPI(baudrate=500000, sck=SCK, mosi=MO, miso=MI)
+
         assert output in ('velocity', 'position'), 'ouput argument must be \'velocity\' or \'position\'.'
         assert bytes_per_sample in (2,4), 'bytes_per_sample must be 2 or 4'
         self.output_velocity = output == 'velocity'
