@@ -9,7 +9,7 @@ class PMW3360DM():
                  eventName: str,
                  reset: str,
                  MT: str,
-                 CS: str,
+                 CS: str = None,
                  MI: str = None,
                  MO: str = None,
                  SCK: str = None):
@@ -34,4 +34,4 @@ class PMW3360DM():
 
         self.motion = _h.Digital_input(pin=MT, falling_event=eventName)
         self.reset = _h.Digital_output(pin=reset)
-        
+
