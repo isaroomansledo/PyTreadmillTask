@@ -2,7 +2,7 @@ import pyb, machine, time
 import pyControl.hardware as _h
 
 
-class ParallelSolDriver():
+class ParallelOdourRelease():
     # mouse motion sensor.
     def __init__(self,
                  SPI_type: str,
