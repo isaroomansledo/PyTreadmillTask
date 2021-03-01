@@ -11,13 +11,14 @@ from machine import SPI
 
 states = ['intertrial',
           'trial_start',
-          'stim_release',
+          'odour_release',
           'reward',
           'penalty']
 
 events = ['motion',
           'lick',
-          'session_timer',         
+          'session_timer',
+
           ]
 
 initial_state = 'wait_for_poke'
@@ -52,7 +53,7 @@ def run_end():
 
 
 # State behaviour functions.
-def wait_for_poke(event):
+def intertrial(event):
     # 'left_poke' event causes transition to state 'reward_available' 
     # with probability 1/v.ratio.
     if event == 'left_poke':
@@ -60,13 +61,13 @@ def wait_for_poke(event):
             goto_state('reward_available')
 
 
-def reward_available(event):
+def trial_start(event):
     # 'right_poke' event causes transition to 'reward' state.
     if event == 'right_poke':
         goto_state('reward')
 
 
-def reward(event):
+def odour_release(event):
     # On entry turn on solenoid and set timer, when timer elapses goto_state
     # 'wait_for_poke' state, on exit turn of solenoid. 
     if event == 'entry':
@@ -76,6 +77,18 @@ def reward(event):
         print('Rewards obtained: {}'.format(v.rewards_obtained))
     elif event == 'exit':
         hw.right_poke.SOL.off()
+
+
+def reward(event):
+    # 'right_poke' event causes transition to 'reward' state.
+    if event == 'right_poke':
+        goto_state('reward')
+
+
+def penalty(event):
+    # 'right_poke' event causes transition to 'reward' state.
+    if event == 'right_poke':
+        goto_state('reward')
 
 
 # State independent behaviour.
