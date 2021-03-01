@@ -5,9 +5,9 @@ import hardware_definition as hw
 from devices import *
 from machine import SPI
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # States and events.
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
 states = ['intertrial',
           'trial_start',
@@ -17,41 +17,41 @@ states = ['intertrial',
 
 events = ['motion',
           'lick',
-          'session_timer',
-          
+          'session_timer',         
           ]
 
 initial_state = 'wait_for_poke'
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # Variables.
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
-v.delta_x= []
-v.delta_y= []
+v.delta_x = []
+v.delta_y = []
 
-v.ratio = 5 # Average number of left pokes needed to make reward available.
+v.ratio = 5  # Average number of left pokes needed to make reward available.
 v.session_duration = 1 * hour
 v.reward_duration = 100 * ms  
 v.rewards_obtained = 0
 
-#-------------------------------------------------------------------------        
+# -------------------------------------------------------------------------        
 # Define behaviour.
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+
 
 # Run start and stop behaviour.
-
-def  run_start():
+def run_start():
     # Code here is executed when the framework starts running.
+    pass
 
 
 def run_end():
-    # Code here is executed when the framework stops running.    
-    # Turn off all hardware outputs.  
+    # Code here is executed when the framework stops running.
+    # Turn off all hardware outputs.
     hw.off()
 
-# State behaviour functions.
 
+# State behaviour functions.
 def wait_for_poke(event):
     # 'left_poke' event causes transition to state 'reward_available' 
     # with probability 1/v.ratio.
@@ -59,10 +59,12 @@ def wait_for_poke(event):
         if withprob(1/v.ratio):
             goto_state('reward_available')
 
+
 def reward_available(event):
     # 'right_poke' event causes transition to 'reward' state.
     if event == 'right_poke':
         goto_state('reward')
+
 
 def reward(event):
     # On entry turn on solenoid and set timer, when timer elapses goto_state
