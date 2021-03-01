@@ -3,6 +3,7 @@
 from pyControl.utility import *
 import hardware_definition as hw
 from devices import *
+import math
 
 # -------------------------------------------------------------------------
 # States and events.
@@ -17,6 +18,7 @@ states = ['intertrial',
 events = ['motion',
           'lick',
           'session_timer',
+          'IT_duration_elapsed'
           ]
 
 initial_state = 'intertrial'
@@ -28,10 +30,12 @@ initial_state = 'intertrial'
 v.delta_x = []
 v.delta_y = []
 
-v.session_duration = 5* second  # 1 * hour
+v.session_duration = 5 * second  # 1 * hour
 v.reward_duration = 100 * ms  
 v.trial_number = 0
 v.min_IT_movement = 10  # cm
+v.min_IT_duration = 1 * second
+v.IT_duration_done___ = False
 
 # -------------------------------------------------------------------------
 # Define behaviour.
@@ -52,9 +56,19 @@ def run_end():
 
 # State behaviour functions.
 def intertrial(event):
-    if event == 'left_poke':
-        if withprob(1/v.ratio):
-            goto_state('reward_available')
+    if event == 'entry':
+        set_timer('IT_duration_elapsed', v.min_IT_duration)
+    elif event == 'lick':
+        pass
+    elif event == 'IT_duration_elapsed':
+        if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) > v.min_IT_movement:
+            v.delta_x, v.delta_y = [], []
+            v.IT_duration_done___ = True
+    elif event == 'motion':
+        if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) >= v.min_IT_movement:
+            v.delta_x, v.delta_y = [], []
+            v.IT_duration_done___ = False
+            goto_state('trial_start')
 
 
 def trial_start(event):
