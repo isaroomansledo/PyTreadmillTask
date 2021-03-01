@@ -1,9 +1,8 @@
-# Test task
+# PyTreadmillTask
 
 from pyControl.utility import *
 import hardware_definition as hw
 from devices import *
-from machine import SPI
 
 # -------------------------------------------------------------------------
 # States and events.
@@ -29,12 +28,11 @@ initial_state = 'intertrial'
 v.delta_x = []
 v.delta_y = []
 
-v.ratio = 5  # Average number of left pokes needed to make reward available.
-v.session_duration = 5* second# 1 * hour
+v.session_duration = 5* second  # 1 * hour
 v.reward_duration = 100 * ms  
-v.rewards_obtained = 0
+v.trial_number = 0
 
-# -------------------------------------------------------------------------        
+# -------------------------------------------------------------------------
 # Define behaviour.
 # -------------------------------------------------------------------------
 
