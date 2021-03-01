@@ -98,5 +98,7 @@ def all_states(event):
         v.delta_x.append(delta_x)
         v.delta_y.append(delta_y)
 
+        print('{},{}'.format(v.delta_x[-1], v.delta_y[-1]))
+
     elif event == 'session_timer':
         stop_framework()
