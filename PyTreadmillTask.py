@@ -31,6 +31,7 @@ v.delta_y = []
 v.session_duration = 5* second  # 1 * hour
 v.reward_duration = 100 * ms  
 v.trial_number = 0
+v.min_IT_movement = 10  # cm
 
 # -------------------------------------------------------------------------
 # Define behaviour.
