@@ -10,4 +10,11 @@ board = Breakout_dseries_1_6()
 
 motionSensor = PMW3360DM(SPI_type='SPI2', eventName='motion', reset='W43', MT='W24')
 
-odour = ParallelOdourRelease()
+odour = ParallelOdourRelease(Ndirections=5, NstimPerDir=2,
+                             board.port_4.DIO_A, board.port_4.DIO_B,    #Dir1
+                             board.port_4.DIO_C, board.port_4.POW_A,    #Dir2
+                             board.port_4.POW_B, board.port_5.DIO_A,    #Dir3
+                             board.port_5.DIO_B, board.port_5.POW_A,    #Dir4
+                             board.port_3.POW_A, board.port_3.POW_B)    #Dir5
+
+

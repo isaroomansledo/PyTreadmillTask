@@ -10,7 +10,7 @@ class ParallelOdourRelease():
                  *pins: str):
 
         # PINS should be exactly Ndirections x NstimPerDir strings
-        # specifying the pins!
+        # specifying the pins! iterating over Direction and Odour
         assert len(pins) == Ndirections*NstimPerDir, "wrong number of pins!"
 
         counter = 0
