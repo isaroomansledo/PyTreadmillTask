@@ -18,10 +18,9 @@ states = ['intertrial',
 events = ['motion',
           'lick',
           'session_timer',
-
           ]
 
-initial_state = 'wait_for_poke'
+initial_state = 'intertrial'
 
 # -------------------------------------------------------------------------
 # Variables.
@@ -31,7 +30,7 @@ v.delta_x = []
 v.delta_y = []
 
 v.ratio = 5  # Average number of left pokes needed to make reward available.
-v.session_duration = 1 * hour
+v.session_duration = 5* second# 1 * hour
 v.reward_duration = 100 * ms  
 v.rewards_obtained = 0
 
@@ -43,7 +42,7 @@ v.rewards_obtained = 0
 # Run start and stop behaviour.
 def run_start():
     # Code here is executed when the framework starts running.
-    pass
+    set_timer('session_timer', v.session_duration)
 
 
 def run_end():
@@ -54,8 +53,6 @@ def run_end():
 
 # State behaviour functions.
 def intertrial(event):
-    # 'left_poke' event causes transition to state 'reward_available' 
-    # with probability 1/v.ratio.
     if event == 'left_poke':
         if withprob(1/v.ratio):
             goto_state('reward_available')
@@ -71,12 +68,12 @@ def odour_release(event):
     # On entry turn on solenoid and set timer, when timer elapses goto_state
     # 'wait_for_poke' state, on exit turn of solenoid. 
     if event == 'entry':
-        timed_goto_state('wait_for_poke', v.reward_duration)
-        hw.right_poke.SOL.on()
+        timed_goto_state('reward', v.reward_duration)
+        hw.odourDelivery.Dir2Odour1.on()
         v.rewards_obtained += 1
         print('Rewards obtained: {}'.format(v.rewards_obtained))
     elif event == 'exit':
-        hw.right_poke.SOL.off()
+        pass
 
 
 def reward(event):
