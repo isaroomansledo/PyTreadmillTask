@@ -36,7 +36,6 @@ class PMW3360DM():
         self.reset = _h.Digital_output(pin=reset, inverted=True)
 
     def read_pos(self):
-        self.select.on()
         # read Motion register to lock the content of delta registers
         self.read_register(int(2).to_bytes(1, 'big'))
 
