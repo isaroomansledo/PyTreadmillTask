@@ -61,14 +61,13 @@ def intertrial(event):
     elif event == 'lick':
         pass
     elif event == 'IT_duration_elapsed':
-        if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) > v.min_IT_movement:
-            v.delta_x, v.delta_y = [], []
-            v.IT_duration_done___ = True
+        v.IT_duration_done___ = True
     elif event == 'motion':
-        if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) >= v.min_IT_movement:
-            v.delta_x, v.delta_y = [], []
-            v.IT_duration_done___ = False
-            goto_state('trial_start')
+        if v.IT_duration_done___ == True:
+            if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) >= v.min_IT_movement:
+                v.delta_x, v.delta_y = [], []
+                v.IT_duration_done___ = False
+                goto_state('trial_start')
 
 
 def trial_start(event):
