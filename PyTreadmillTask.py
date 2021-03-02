@@ -4,7 +4,7 @@ from pyControl.utility import *
 import hardware_definition as hw
 from devices import *
 import math
-import init_trial, init_odour
+import init_odour
 
 # -------------------------------------------------------------------------
 # States and events.
@@ -71,6 +71,12 @@ def intertrial(event):
 
 
 def trial_start(event):
+    if event == 'entry':
+        v.delta_x, v.delta_y = [], []
+    elif event == 'motion':
+        # implement the criteria
+        pass
+
     init_trial.init_trial(event)
 
 
