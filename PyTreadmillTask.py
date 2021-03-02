@@ -46,6 +46,7 @@ v.IT_duration_done___ = False
 v.odour_release_delay = 1  # second
 v.max_odour_time = 10 * second
 v.max_odour_movement = 50  # cm
+v.distance_to_target = 20  # cm
 v.odourant_direction = -1
 
 # -------------------------------------------------------------------------
@@ -56,7 +57,7 @@ v.odourant_direction = -1
 # Run start and stop behaviour.
 def run_start():
     # Code here is executed when the framework starts running.
-    set_timer('session_timer', v.session_duration)
+    set_timer('session_timer', v.session_duration, True)
 
 
 def run_end():
@@ -98,7 +99,7 @@ def odour_release(event):
         v.odourant_direction = init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
     elif event == 'motion':
-        pass
+        init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y), v.odourant_direction, v.distance_to_target)
     elif event == 'odour_duration_elapsed':
         goto_state('penalty')
 
@@ -117,7 +118,6 @@ def penalty(event):
 def all_states(event):
     # Code here will be executed when any event occurs,
     # irrespective of the state the machine is in.
-    # When 'session_timer' event occurs stop framework to end session.
     if event == 'motion':
         # read the motion registers and and append the variables
         delta_x, delta_y = hw.motionSensor.read_pos()
