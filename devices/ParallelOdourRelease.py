@@ -20,7 +20,7 @@ class ParallelOdourRelease():
         for dir in range(Ndirections):
             for stim in range(NstimPerDir):
                 tmp = _h.Digital_output(pin=pins[counter])
-                self.__dict__[self._sol_name(dir, stim)] = tmp
+                self.__dict__[self._sol_name(dir + 1, stim + 1)] = tmp
                 tmp.off()
 
                 counter += 1
@@ -28,12 +28,12 @@ class ParallelOdourRelease():
     def all_off(self):
         for dir in range(self.Ndirections):
             for stim in range(self.NstimPerDir):
-                self.__dict__[self._sol_name(dir, stim)].off()
+                self.__dict__[self._sol_name(dir + 1, stim + 1)].off()
 
     def clean_air_on(self):
         for dir in range(self.Ndirections):
-            self.__dict__[self._sol_name(dir, 0)].on()
+            self.__dict__[self._sol_name(dir + 1, 1)].on()
 
     @staticmethod
     def _sol_name(dir: int, odour: int) -> str:
-        return 'Dir' + str(dir + 1) + 'Odour' + str(odour + 1)
+        return 'Dir' + str(dir) + 'Odour' + str(odour)
