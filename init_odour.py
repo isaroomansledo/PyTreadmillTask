@@ -20,11 +20,13 @@ def single_odourant_random(odourDevice: ParallelOdourRelease, delay: float = 0):
 
 _pi = math.pi
 _target_angle = {0: 5 * _pi / 6,
-                1: 2 * _pi / 3,
-                2: _pi / 2,
-                3: _pi / 3,
-                4: _pi / 6}
-def arrived_to_target(dX, dY, odourant_direction, distance_to_target):
+                 1: 2 * _pi / 3,
+                 2: _pi / 2,
+                 3: _pi / 3,
+                 4: _pi / 6}
+
+
+def arrived_to_target(dX, dY, odourant_direction, distance_to_target, target_angle_tolerance):
     """
     checks the motion critereon
     MUST have 5 odour directions
@@ -32,4 +34,12 @@ def arrived_to_target(dX, dY, odourant_direction, distance_to_target):
     assert odourant_direction < 5, 'wrong direction value'
 
     movement = math.sqrt(dX**2 + dY**2)
-    move_angle = math.atan2(dY, dX)
+    if movement < distance_to_target:
+        return None
+
+    else:
+        move_angle = math.atan2(dY, dX)
+        if abs(move_angle - _target_angle[odourant_direction]) < target_angle_tolerance:
+            return True
+        else:
+            return False

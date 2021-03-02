@@ -47,6 +47,7 @@ v.odour_release_delay = 1  # second
 v.max_odour_time = 10 * second
 v.max_odour_movement = 50  # cm
 v.distance_to_target = 20  # cm
+v.target_angle_tolerance = math.pi / 18  # deg_rad
 v.odourant_direction = -1
 
 # -------------------------------------------------------------------------
@@ -99,7 +100,10 @@ def odour_release(event):
         v.odourant_direction = init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
     elif event == 'motion':
-        res = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y), v.odourant_direction, v.distance_to_target)
+        res = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y),
+                                           v.odourant_direction,
+                                           v.distance_to_target,
+                                           v.target_angle_tolerance)
         if res is None:
             pass
         elif res is True:
