@@ -28,15 +28,23 @@ initial_state = 'intertrial'
 # Variables.
 # -------------------------------------------------------------------------
 
-v.delta_x = []
-v.delta_y = []
 
+# session params
 v.session_duration = 5 * second  # 1 * hour
 v.reward_duration = 100 * ms  
 v.trial_number = 0
+v.delta_x = []
+v.delta_y = []
+
+# intertrial params
 v.min_IT_movement = 10  # cm
 v.min_IT_duration = 1 * second
 v.IT_duration_done___ = False
+
+# trial params
+v.odour_release_delay = 1 #second
+v.max_odour_time = 10 * second
+v.max_odour_movement = 50  # cm
 
 # -------------------------------------------------------------------------
 # Define behaviour.
@@ -82,8 +90,9 @@ def odour_release(event):
     if event == 'entry':
         del v.delta_x [:-1]
         del v.delta_y [:-1]
+        init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
     elif event == 'motion':
-        init_odour.single_odourant_random(odourDelivery)
+        init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
 
 
 def reward(event):
