@@ -4,7 +4,7 @@ from pyControl.utility import *
 import hardware_definition as hw
 from devices import *
 import math
-import init_trial
+import init_trial, init_odour
 
 # -------------------------------------------------------------------------
 # States and events.
@@ -75,16 +75,7 @@ def trial_start(event):
 
 
 def odour_release(event):
-    # On entry turn on solenoid and set timer, when timer elapses goto_state
-    # 'wait_for_poke' state, on exit turn of solenoid. 
-    if event == 'entry':
-        timed_goto_state('reward', v.reward_duration)
-        hw.odourDelivery.Dir2Odour1.on()
-        v.rewards_obtained += 1
-        print('Rewards obtained: {}'.format(v.rewards_obtained))
-    elif event == 'exit':
-        pass
-
+    init_odour.single_odourant_random(event)
 
 def reward(event):
     # 'right_poke' event causes transition to 'reward' state.
