@@ -1,4 +1,4 @@
-import pyb, machine, time
+import pyb, machine, utime
 import pyControl.hardware as _h
 
 
@@ -57,5 +57,5 @@ class PMW3360DM():
         self.SPI.write(addrs)
         data = self.SPI.read(1)
         self.select.off()
-        time.sleep_us(20)
+        utime.sleep_us(20)
         return data
