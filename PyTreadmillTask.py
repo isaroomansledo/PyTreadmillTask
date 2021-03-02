@@ -4,6 +4,7 @@ from pyControl.utility import *
 import hardware_definition as hw
 from devices import *
 import math
+import init_trial
 
 # -------------------------------------------------------------------------
 # States and events.
@@ -63,17 +64,14 @@ def intertrial(event):
     elif event == 'IT_duration_elapsed':
         v.IT_duration_done___ = True
     elif event == 'motion':
-        if v.IT_duration_done___ == True:
+        if v.IT_duration_done___:
             if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) >= v.min_IT_movement:
-                v.delta_x, v.delta_y = [], []
                 v.IT_duration_done___ = False
                 goto_state('trial_start')
 
 
 def trial_start(event):
-    # 'right_poke' event causes transition to 'reward' state.
-    if event == 'right_poke':
-        goto_state('reward')
+    init_trial.init_trial(event)
 
 
 def odour_release(event):
