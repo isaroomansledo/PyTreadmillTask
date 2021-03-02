@@ -99,7 +99,13 @@ def odour_release(event):
         v.odourant_direction = init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
     elif event == 'motion':
-        init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y), v.odourant_direction, v.distance_to_target)
+        res = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y), v.odourant_direction, v.distance_to_target)
+        if res is None:
+            pass
+        elif res is True:
+            goto_state('reward')
+        elif res is False:
+            goto_state('penalty')
     elif event == 'odour_duration_elapsed':
         goto_state('penalty')
 
