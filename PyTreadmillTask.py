@@ -19,7 +19,8 @@ states = ['intertrial',
 events = ['motion',
           'lick',
           'session_timer',
-          'IT_duration_elapsed'
+          'IT_duration_elapsed',
+          'odour_duration_elapsed'
           ]
 
 initial_state = 'intertrial'
@@ -91,9 +92,11 @@ def odour_release(event):
         del v.delta_x [:-1]
         del v.delta_y [:-1]
         init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
+        set_timer('odour_duration_elapsed', v.max_odour_time)
     elif event == 'motion':
-        init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
-
+        pass
+    elif event == 'odour_duration_elapsed':
+        goto_state('penalty')
 
 def reward(event):
     # 'right_poke' event causes transition to 'reward' state.
