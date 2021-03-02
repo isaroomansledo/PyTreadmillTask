@@ -43,9 +43,10 @@ v.min_IT_duration = 1 * second
 v.IT_duration_done___ = False
 
 # trial params
-v.odour_release_delay = 1 #second
+v.odour_release_delay = 1  # second
 v.max_odour_time = 10 * second
 v.max_odour_movement = 50  # cm
+v.odourant_direction = -1
 
 # -------------------------------------------------------------------------
 # Define behaviour.
@@ -81,7 +82,10 @@ def intertrial(event):
 
 def trial_start(event):
     if event == 'entry':
+        disarm_timer('IT_duration_elapsed')
         v.delta_x, v.delta_y = [], []
+        v.trial_number += 1
+        print('{}, trial_number'.format(v.trial_number))
     elif event == 'motion':
         # implement the criteria
         pass
@@ -89,25 +93,24 @@ def trial_start(event):
 
 def odour_release(event):
     if event == 'entry':
-        del v.delta_x [:-1]
-        del v.delta_y [:-1]
-        init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
+        del v.delta_x[:-1]
+        del v.delta_y[:-1]
+        v.odourant_direction = init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
     elif event == 'motion':
         pass
     elif event == 'odour_duration_elapsed':
         goto_state('penalty')
 
+
 def reward(event):
-    # 'right_poke' event causes transition to 'reward' state.
-    if event == 'right_poke':
-        goto_state('reward')
+    if event == 'entry':
+        disarm_timer('odour_duration_elapsed')
 
 
 def penalty(event):
-    # 'right_poke' event causes transition to 'reward' state.
-    if event == 'right_poke':
-        goto_state('reward')
+    if event == 'entry':
+        disarm_timer('odour_duration_elapsed')
 
 
 # State independent behaviour.
