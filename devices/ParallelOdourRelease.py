@@ -35,7 +35,10 @@ class ParallelOdourRelease():
             self.__dict__[self._sol_name(dir, 0)].on()
 
     def odour_release(self, dir: int):
+        for direction in range(self.Ndirections):
+            odour = 1 if direction == dir else 0
 
+            self.__dict__[self._sol_name(direction, odour)].on()
 
     @staticmethod
     def _sol_name(dir: int, odour: int) -> str:
