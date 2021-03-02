@@ -77,11 +77,14 @@ def trial_start(event):
         # implement the criteria
         pass
 
-    init_trial.init_trial(event)
-
 
 def odour_release(event):
-    init_odour.single_odourant_random(event)
+    if event == 'entry':
+        del v.delta_x [:-1]
+        del v.delta_y [:-1]
+    elif event == 'motion':
+        init_odour.single_odourant_random(odourDelivery)
+
 
 def reward(event):
     # 'right_poke' event causes transition to 'reward' state.
