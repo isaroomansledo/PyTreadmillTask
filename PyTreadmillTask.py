@@ -128,7 +128,10 @@ def reward(event):
 def penalty(event):
     if event == 'entry':
         disarm_timer('odour_duration_elapsed')
+        set_timer('penalty_duration', v.reward_duration, False)
         # implement the penalty
+    elif event == 'penalty_duration':
+        disarm_timer('penalty_duration')
         goto_state('intertrial')
 
 
