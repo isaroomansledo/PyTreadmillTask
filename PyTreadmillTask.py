@@ -117,6 +117,12 @@ def odour_release(event):
 def reward(event):
     if event == 'entry':
         disarm_timer('odour_duration_elapsed')
+        set_timer('reward_duration', v.reward_duration, False)
+        rewardSol.on()
+    elif event == 'reward_duration':
+        rewardSol.off()
+        disarm_timer('reward_duration')
+        goto_state('intertrial')
 
 
 def penalty(event):

@@ -19,4 +19,4 @@ odourDelivery = ParallelOdourRelease(5, 2,
                                      board.port_3.POW_A, board.port_3.POW_B)    # Dir5
 
 
-rewardSol = Digital_output(pin=board.port_5.POW_B)
+rewardSol = Digital_output(pin=board.port_5.POW_B, inverted=False, pulse_enabled=False)
