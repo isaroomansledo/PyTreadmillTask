@@ -20,3 +20,6 @@ odourDelivery = ParallelOdourRelease(5, 2,
 
 
 rewardSol = Digital_output(pin=board.port_5.POW_B, inverted=False, pulse_enabled=False)
+
+lickometer = Lickometer(port=board.port_6, rising_event_A='lick', falling_event_A='_lick_off___',
+                        rising_event_B='_lick_2___', falling_event_B='_lick_2_off___', debounce=5)
