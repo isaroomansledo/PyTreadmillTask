@@ -39,10 +39,10 @@ class PMW3360DM():
         # read Motion register to lock the content of delta registers
         self.read_register(int(2).to_bytes(1, 'big'))
 
-        delta_x_L = self.read_register(int(3).to_bytes(1, 'big'))
-        delta_x_H = self.read_register(int(4).to_bytes(1, 'big'))
-        delta_y_L = self.read_register(int(5).to_bytes(1, 'big'))
-        delta_y_H = self.read_register(int(6).to_bytes(1, 'big'))
+        delta_x_L = self.read_register(3 .to_bytes(1, 'big'))
+        delta_x_H = self.read_register(4 .to_bytes(1, 'big'))
+        delta_y_L = self.read_register(5 .to_bytes(1, 'big'))
+        delta_y_H = self.read_register(6 .to_bytes(1, 'big'))
 
         delta_x = delta_x_H + delta_x_L
         delta_y = delta_y_H + delta_y_L
