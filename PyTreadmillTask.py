@@ -72,6 +72,7 @@ def intertrial(event):
     if event == 'entry':
         set_timer('IT_duration_elapsed', v.min_IT_duration)
     elif event == 'lick':
+        # TODO: handle the lick data better
         pass
     elif event == 'IT_duration_elapsed':
         v.IT_duration_done___ = True
@@ -89,7 +90,7 @@ def trial_start(event):
         v.trial_number += 1
         print('{}, trial_number'.format(v.trial_number))
     elif event == 'motion':
-        # implement the criteria
+        # TODO: implement the criteria
         pass
 
 
