@@ -26,7 +26,10 @@ _target_angle = {0: 5 * _pi / 6,
                  4: _pi / 6}
 
 
-def arrived_to_target(dX, dY, odourant_direction, distance_to_target, target_angle_tolerance):
+def arrived_to_target(dX: float, dY: float,
+                      odourant_direction: int,
+                      distance_to_target: float,
+                      target_angle_tolerance: float):
     """
     checks the motion critereon
     MUST have 5 odour directions
