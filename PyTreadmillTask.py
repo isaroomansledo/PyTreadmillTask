@@ -99,8 +99,6 @@ def trial_start(event):
 
 def odour_release(event):
     if event == 'entry':
-        del v.delta_x[:-1]
-        del v.delta_y[:-1]
         odourDelivery.all_off()
         v.odour_delay_done___ = False
         set_timer('odour_delay_elapsed', v.odour_release_delay)
@@ -108,6 +106,8 @@ def odour_release(event):
     elif event == 'odour_delay_elapsed':
         v.odour_delay_done___ = True
         v.odourant_direction = init_odour.release_single_odourant_random(odourDelivery)
+        del v.delta_x[:-1]
+        del v.delta_y[:-1]
     elif event == 'motion':
         if v.odour_delay_done___:
             arrived = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y),
