@@ -89,9 +89,10 @@ def trial_start(event):
         v.delta_x, v.delta_y = [], []
         v.trial_number += 1
         print('{}, trial_number'.format(v.trial_number))
+        odourDelivery.clean_air_on()
     elif event == 'motion':
         # TODO: implement the criteria
-        pass
+        odourDelivery.clean_air_on()
 
 
 def odour_release(event):
