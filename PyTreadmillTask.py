@@ -4,6 +4,7 @@ from pyControl.utility import *
 import hardware_definition as hw
 from devices import *
 import math
+import uarray
 import init_odour
 
 # -------------------------------------------------------------------------
@@ -35,8 +36,8 @@ initial_state = 'intertrial'
 v.session_duration = 5 * second  # 1 * hour
 v.reward_duration = 100 * ms  
 v.trial_number = 0
-v.delta_x = []
-v.delta_y = []
+v.delta_x = uarray.array('i')  # signed int minimm 2 bytes
+v.delta_y = uarray.array('i')
 
 # intertrial params
 v.min_IT_movement = 10  # cm
@@ -88,7 +89,7 @@ def intertrial(event):
 def trial_start(event):
     if event == 'entry':
         disarm_timer('IT_duration_elapsed')
-        v.delta_x, v.delta_y = [], []
+        v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
         v.trial_number += 1
         print('{}, trial_number'.format(v.trial_number))
         odourDelivery.clean_air_on()
@@ -106,8 +107,7 @@ def odour_release(event):
     elif event == 'odour_release_delay_elapsed':
         v.odour_delay_done___ = True
         v.odourant_direction = init_odour.release_single_odourant_random(odourDelivery)
-        del v.delta_x[:-1]
-        del v.delta_y[:-1]
+        v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'motion':
         if v.odour_delay_done___:
             arrived = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y),
