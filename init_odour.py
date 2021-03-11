@@ -6,7 +6,6 @@ import utime, math
 def release_single_odourant_random(odourDevice: ParallelOdourRelease):
     """
     Releases 1 odourant at a random direction
-    delay: turn everything off for a 'delay' period, in seconds
     """
     stimDir = randint(0, odourDevice.Ndirections - 1)
     odourDevice.all_off()
