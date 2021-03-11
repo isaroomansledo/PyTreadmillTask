@@ -3,14 +3,13 @@ from devices import *
 import utime, math
 
 
-def single_odourant_random(odourDevice: ParallelOdourRelease, delay: float = 0):
+def release_single_odourant_random(odourDevice: ParallelOdourRelease):
     """
     Releases 1 odourant at a random direction
     delay: turn everything off for a 'delay' period, in seconds
     """
     stimDir = randint(0, odourDevice.Ndirections - 1)
     odourDevice.all_off()
-    utime.sleep(delay)
     odourDevice.odour_release(stimDir)
 
     print('{}, odourant_direction'.format(stimDir))

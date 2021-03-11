@@ -20,7 +20,8 @@ events = ['motion',
           'lick',
           'session_timer',
           'IT_duration_elapsed',
-          'odour_duration_elapsed'
+          'odour_duration_elapsed',
+          'odour_delay_elapsed'
           ]
 
 initial_state = 'intertrial'
@@ -44,6 +45,7 @@ v.IT_duration_done___ = False
 
 # trial params
 v.odour_release_delay = 1  # second
+v.odour_delay_done___ = False
 v.max_odour_time = 10 * second
 v.max_odour_movement = 50  # cm
 v.distance_to_target = 20  # cm
@@ -99,19 +101,25 @@ def odour_release(event):
     if event == 'entry':
         del v.delta_x[:-1]
         del v.delta_y[:-1]
-        v.odourant_direction = init_odour.single_odourant_random(odourDelivery, v.odour_release_delay)
+        odourDelivery.all_off()
+        v.odour_delay_done___ = False
+        set_timer('odour_delay_elapsed', v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
+    elif event == 'odour_delay_elapsed':
+        v.odour_delay_done___ = True
+        v.odourant_direction = init_odour.release_single_odourant_random(odourDelivery)
     elif event == 'motion':
-        arrived = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y),
-                                               v.odourant_direction,
-                                               v.distance_to_target,
-                                               v.target_angle_tolerance)
-        if arrived is None:
-            pass
-        elif arrived is True:
-            goto_state('reward')
-        elif arrived is False:
-            goto_state('penalty')
+        if v.odour_delay_done___:
+            arrived = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y),
+                                                   v.odourant_direction,
+                                                   v.distance_to_target,
+                                                   v.target_angle_tolerance)
+            if arrived is None:
+                pass
+            elif arrived is True:
+                goto_state('reward')
+            elif arrived is False:
+                goto_state('penalty')
     elif event == 'odour_duration_elapsed':
         goto_state('penalty')
 
