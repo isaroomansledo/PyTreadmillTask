@@ -21,7 +21,7 @@ events = ['motion',
           'session_timer',
           'IT_duration_elapsed',
           'odour_duration_elapsed',
-          'odour_delay_elapsed'
+          'odour_release_delay_elapsed'
           ]
 
 initial_state = 'intertrial'
@@ -101,9 +101,9 @@ def odour_release(event):
     if event == 'entry':
         odourDelivery.all_off()
         v.odour_delay_done___ = False
-        set_timer('odour_delay_elapsed', v.odour_release_delay)
+        set_timer('odour_release_delay_elapsed', v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
-    elif event == 'odour_delay_elapsed':
+    elif event == 'odour_release_delay_elapsed':
         v.odour_delay_done___ = True
         v.odourant_direction = init_odour.release_single_odourant_random(odourDelivery)
         del v.delta_x[:-1]
