@@ -104,7 +104,7 @@ def odour_release(event):
         v.odour_delay_done___ = False
         set_timer('odour_release_delay_elapsed', v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
-    elif event == 'odour_release_delay_elapsed':
+    elif event == 'odour_release_delay_elapsed':  # release the odour
         v.odour_delay_done___ = True
         v.odourant_direction = init_odour.release_single_odourant_random(odourDelivery)
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
