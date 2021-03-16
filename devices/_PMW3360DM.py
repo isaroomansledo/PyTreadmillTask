@@ -68,10 +68,11 @@ class PMW3360DM():
         """
         addrs < 128
         """
+        # flip the MSB to 1:
+        addrs = addrs | 0b1000_0000
         addrs = addrs.to_bytes(1, 'big')
         self.select.on()
         self.SPI.write(addrs)
-        data = self.SPI.read(1)
+        self.SPI.write(data)
+        utime.sleep_us(35)
         self.select.off()
-        utime.sleep_us(20)
-        return data
