@@ -25,4 +25,3 @@ lickometer = Lickometer(port=board.port_6, rising_event_A='lick', falling_event_
                         rising_event_B='_lick_2___', falling_event_B='_lick_2_off___', debounce=5)
 
 speaker = Audio_board(board.port_7)
-
