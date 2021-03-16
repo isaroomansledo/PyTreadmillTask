@@ -37,12 +37,12 @@ class PMW3360DM():
 
     def read_pos(self):
         # read Motion register to lock the content of delta registers
-        self.read_register(2 .to_bytes(1, 'big'))
+        self.read_register(2)
 
-        delta_x_L = self.read_register(3 .to_bytes(1, 'big'))
-        delta_x_H = self.read_register(4 .to_bytes(1, 'big'))
-        delta_y_L = self.read_register(5 .to_bytes(1, 'big'))
-        delta_y_H = self.read_register(6 .to_bytes(1, 'big'))
+        delta_x_L = self.read_register(3)
+        delta_x_H = self.read_register(4)
+        delta_y_L = self.read_register(5)
+        delta_y_H = self.read_register(6)
 
         delta_x = delta_x_H + delta_x_L
         delta_y = delta_y_H + delta_y_L
@@ -52,7 +52,11 @@ class PMW3360DM():
 
         return delta_x, delta_y
 
-    def read_register(self, addrs: bytes):
+    def read_register(self, addrs: int):
+        """
+        addrs < 128
+        """
+        addrs = addrs.to_bytes(1, 'big')
         self.select.on()
         self.SPI.write(addrs)
         data = self.SPI.read(1)
@@ -61,7 +65,10 @@ class PMW3360DM():
         return data
 
     def write_register(self, addrs: bytes, data: bytes):
-        
+        """
+        addrs < 128
+        """
+        addrs = addrs.to_bytes(1, 'big')
         self.select.on()
         self.SPI.write(addrs)
         data = self.SPI.read(1)
