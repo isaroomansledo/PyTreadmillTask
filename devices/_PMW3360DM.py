@@ -59,3 +59,12 @@ class PMW3360DM():
         self.select.off()
         utime.sleep_us(20)
         return data
+
+    def write_register(self, addrs: bytes, data: bytes):
+        
+        self.select.on()
+        self.SPI.write(addrs)
+        data = self.SPI.read(1)
+        self.select.off()
+        utime.sleep_us(20)
+        return data
