@@ -1,5 +1,6 @@
 import pyb, machine, utime
 import pyControl.hardware as _h
+import PMW3360DM_srom_0x04 as srom
 
 
 class PMW3360DM():
