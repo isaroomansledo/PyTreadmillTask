@@ -65,15 +65,70 @@ class PMW3360DM():
         utime.sleep_us(20)
         return data
 
-    def write_register(self, addrs: bytes, data: bytes):
+    def write_register(self, addrs: int, data: int):
         """
         addrs < 128
         """
         # flip the MSB to 1:
         addrs = addrs | 0b1000_0000
         addrs = addrs.to_bytes(1, 'big')
+        data = data.to_bytes(1, 'big')
         self.select.on()
         self.SPI.write(addrs)
         self.SPI.write(data)
         utime.sleep_us(35)
         self.select.off()
+
+    def power_up(self):
+        """
+        Perform the power up sequence
+        As per page 26 of datasheet
+        """
+        # 2
+        self.select.off()
+        utime.sleep_ms(1)
+        self.select.on()
+        utime.sleep_ms(1)
+        # 3
+        self.reset.on()
+        utime.sleep_ms(1)
+        self.reset.off()
+        # 4
+        utime.sleep_ms(60)
+        # 5
+        self.read_pos()
+
+        # SROM Download
+        # As per page 23 of datasheet
+        # 2
+        val = self.read_register(0x10)
+        val = val | 0b0010_0000
+        self.write_register(0x10, val)
+        utime.sleep_ms(1)
+        # 3
+        self.write_register(0x13, 0x1d)
+        # 4
+        utime.sleep_ms(15)
+        # 5
+        self.write_register(0x13, 0x18)
+        # 6
+        self.download_srom((srom.PROGMEM))
+        # 7
+        ID = self.read_register(0x2a)
+        utime.sleep_ms(1)
+        # 8
+        self.write_register(0x10, 0x00)
+
+        print('{}, SROM ID, DONE!'.format(ID))  # Id must not equal zero
+
+    def download_srom(self, srom):
+        # flip the MSB to 1:
+        addrs = 0x62
+        addrs = addrs.to_bytes(1, 'big')
+        
+        self.SPI.write(addrs)
+        for srom_byte in srom:
+            self.SPI.write(srom_byte.to_bytes(1, 'big'))
+            utime.sleep_us(20)
+        
+        utime.sleep_ms(1)
