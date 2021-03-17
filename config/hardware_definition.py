@@ -2,6 +2,7 @@
 # Nosepokes are plugged into ports 1-3, and a houselight is in port 4. 
 
 from devices import *
+from pyb import LED
 
 board = Breakout_dseries_1_6()
 
@@ -25,3 +26,6 @@ lickometer = Lickometer(port=board.port_6, rising_event_A='lick', falling_event_
                         rising_event_B='_lick_2___', falling_event_B='_lick_2_off___', debounce=5)
 
 speaker = Audio_board(board.port_7)
+
+led = LED(1)
+led2 = LED(2)

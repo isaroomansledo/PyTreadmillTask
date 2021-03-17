@@ -26,8 +26,10 @@ initial_state = 'intertrial'
 
 
 # session params
-v.session_duration = 5 * second  # 1 * hour
-
+v.session_duration = 30 * second  # 1 * hour
+v.min_IT_duration = 1 * second
+v.delta_x = uarray.array('i')  # signed int minimm 2 bytes
+v.delta_y = uarray.array('i')
 # -------------------------------------------------------------------------
 # Define behaviour.
 # -------------------------------------------------------------------------
@@ -49,29 +51,22 @@ def run_end():
 def intertrial(event):
     if event == 'entry':
         set_timer('IT_duration_elapsed', v.min_IT_duration)
-    elif event == 'lick':
-        # TODO: handle the lick data better
-        pass
+        led.on()
     elif event == 'IT_duration_elapsed':
         v.IT_duration_done___ = True
     elif event == 'motion':
         if v.IT_duration_done___:
-            if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) >= v.min_IT_movement:
-                v.IT_duration_done___ = False
-                goto_state('trial_start')
+            led.off()
+            goto_state('trial_start')
 
 
 def trial_start(event):
     if event == 'entry':
         disarm_timer('IT_duration_elapsed')
-        v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
-        v.trial_number += 1
-        print('{}, trial_number'.format(v.trial_number))
-        odourDelivery.clean_air_on()
+        led2.on()
     elif event == 'motion':
-        # TODO: implement the criteria
-        odourDelivery.clean_air_on()
-
+        led2.off()
+        goto_state('intertrial')
 
 
 # State independent behaviour.
