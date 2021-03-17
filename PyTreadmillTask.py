@@ -40,6 +40,8 @@ def run_start():
     # Code here is executed when the framework starts running.
     set_timer('session_timer', v.session_duration, True)
 
+    motionSensor.power_up()
+
 
 def run_end():
     # Code here is executed when the framework stops running.
