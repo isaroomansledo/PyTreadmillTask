@@ -101,7 +101,7 @@ class PMW3360DM():
         # As per page 23 of datasheet
         # 2
         val = self.read_register(0x10)
-        val = val | 0b0010_0000
+        val = int.from_bytes(self.read_register(0x10), 'big', True)
         self.write_register(0x10, val)
         utime.sleep_ms(1)
         # 3
