@@ -1,6 +1,5 @@
 import pyb, machine, utime
 import pyControl.hardware as _h
-import PMW3360DM_srom_0x04 as srom
 
 
 class PMW3360DM():
@@ -112,7 +111,7 @@ class PMW3360DM():
         # 5
         self.write_register(0x13, 0x18)
         # 6
-        self.download_srom((srom.PROGMEM))
+        self.download_srom((_h.PMW3360DM_srom_0x04.PROGMEM))
         # 7
         ID = self.read_register(0x2a)
         utime.sleep_ms(1)
