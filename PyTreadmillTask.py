@@ -16,6 +16,7 @@ states = ['intertrial',
 
 events = ['motion',
           'session_timer',
+          'IT_duration_elapsed'
           ]
 
 initial_state = 'intertrial'
