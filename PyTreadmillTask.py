@@ -41,7 +41,7 @@ def run_start():
     # Code here is executed when the framework starts running.
     set_timer('session_timer', v.session_duration, True)
 
-    motionSensor.power_up()
+    hw.motionSensor.power_up()
 
 
 def run_end():
@@ -54,21 +54,21 @@ def run_end():
 def intertrial(event):
     if event == 'entry':
         set_timer('IT_duration_elapsed', v.min_IT_duration)
-        led.on()
+        hw.led.on()
     elif event == 'IT_duration_elapsed':
         v.IT_duration_done___ = True
     elif event == 'motion':
         if v.IT_duration_done___:
-            led.off()
+            hw.led.off()
             goto_state('trial_start')
 
 
 def trial_start(event):
     if event == 'entry':
         disarm_timer('IT_duration_elapsed')
-        led2.on()
+        hw.led2.on()
     elif event == 'motion':
-        led2.off()
+        hw.led2.off()
         goto_state('intertrial')
 
 
