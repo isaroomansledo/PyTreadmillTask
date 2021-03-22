@@ -22,8 +22,7 @@ events = ['motion',
           'session_timer',
           'IT_duration_elapsed',
           'odour_duration_elapsed',
-          'reward_duration',
-          'penalty_duration',
+          'reward_duration_elapsed'
           ]
 
 initial_state = 'intertrial'
@@ -34,8 +33,9 @@ initial_state = 'intertrial'
 
 
 # session params
-v.session_duration = 5 * second  # 1 * hour
-v.reward_duration = 100 * ms  
+v.session_duration = 1 * hour
+v.reward_duration = 100 * ms
+v.penalty_duration = 10 * second
 v.trial_number = 0
 v.delta_x = uarray.array('i')  # signed int minimm 2 bytes
 v.delta_y = uarray.array('i')
@@ -51,7 +51,7 @@ v.max_odour_movement = 50  # cm
 v.distance_to_target = 20  # cm
 v.target_angle_tolerance = math.pi / 18  # deg_rad
 v.odourant_direction = -1
-v.air_off_duration = 1 * second
+v.air_off_duration = 100 * ms
 
 # -------------------------------------------------------------------------
 # Define behaviour.
@@ -63,6 +63,7 @@ def run_start():
     # Code here is executed when the framework starts running.
     set_timer('session_timer', v.session_duration, True)
     hw.motionSensor.power_up()
+    hw.odourDelivery.clean_air_on()
 
 
 def run_end():
@@ -75,8 +76,8 @@ def run_end():
 # State behaviour functions.
 def intertrial(event):
     if event == 'entry':
+        # coded so that at this point, there is clean air coming from ecery direction
         set_timer('IT_duration_elapsed', v.min_IT_duration)
-        hw.odourDelivery.clean_air_on()
     elif event == 'lick':
         # TODO: handle the lick data better
         pass
@@ -123,22 +124,20 @@ def odour_release(event):
 def reward(event):
     if event == 'entry':
         disarm_timer('odour_duration_elapsed')
-        set_timer('reward_duration', v.reward_duration, False)
+        hw.odourDelivery.clean_air_on()
+        set_timer('reward_duration_elapsed', v.reward_duration, False)
         hw.rewardSol.on()
-    elif event == 'reward_duration':
+    elif event == 'reward_duration_elapsed':
         hw.rewardSol.off()
-        disarm_timer('reward_duration')
+        disarm_timer('reward_duration_elapsed')
         goto_state('intertrial')
 
 
 def penalty(event):
     if event == 'entry':
         disarm_timer('odour_duration_elapsed')
-        set_timer('penalty_duration', v.reward_duration, False)
-        # TODO: implement the penalty
-    elif event == 'penalty_duration':
-        disarm_timer('penalty_duration')
-        goto_state('intertrial')
+        hw.odourDelivery.clean_air_on()
+        timed_goto_state('intertrial', v.penalty_duration)
 
 
 # State independent behaviour.
