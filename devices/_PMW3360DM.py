@@ -134,10 +134,10 @@ class PMW3360DM():
         self.select.on()
         utime.sleep_ms(1)
         self.reset.on()
+        utime.sleep_ms(60)
+        self.read_pos()
         utime.sleep_ms(1)
         self.select.off()
-        utime.sleep_ms(1)
-        self.read_pos()
         utime.sleep_ms(1)
 
     def download_srom(self, srom):
