@@ -70,6 +70,7 @@ def run_start():
 def run_end():
     # Code here is executed when the framework stops running.
     # Turn off all hardware outputs.
+    hw.motionSensor.shut_down()
     hw.off()
 
 
