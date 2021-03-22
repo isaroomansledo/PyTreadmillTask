@@ -121,6 +121,7 @@ class PMW3360DM():
 
         print('{}, SROM ID, DONE!'.format(ID))  # Id must not equal zero
 
+        self.write_register(2, 0)  # not sure about this line: write an arbitrary value to the motion register
         self.select.off()
 
     def download_srom(self, srom):
