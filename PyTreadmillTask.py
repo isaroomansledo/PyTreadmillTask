@@ -22,7 +22,9 @@ events = ['motion',
           'session_timer',
           'IT_duration_elapsed',
           'odour_duration_elapsed',
-          'odour_release_delay_elapsed'
+          'odour_release_delay_elapsed',
+          'reward_duration',
+          'penalty_duration'
           ]
 
 initial_state = 'intertrial'
