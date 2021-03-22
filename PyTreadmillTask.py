@@ -64,6 +64,7 @@ v.odourant_direction = -1
 def run_start():
     # Code here is executed when the framework starts running.
     set_timer('session_timer', v.session_duration, True)
+    hw.motionSensor.power_up()
 
 
 def run_end():

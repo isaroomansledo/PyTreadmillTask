@@ -121,6 +121,8 @@ class PMW3360DM():
 
         print('{}, SROM ID, DONE!'.format(ID))  # Id must not equal zero
 
+        self.select.off()
+
     def download_srom(self, srom):
         # flip the MSB to 1:
         addrs = 0x62
