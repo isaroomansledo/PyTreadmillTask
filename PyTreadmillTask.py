@@ -78,11 +78,13 @@ def run_end():
 def intertrial(event):
     if event == 'entry':
         set_timer('IT_duration_elapsed', v.min_IT_duration)
+        hw.odourDelivery.clean_air_on()
     elif event == 'lick':
         # TODO: handle the lick data better
         pass
     elif event == 'IT_duration_elapsed':
         v.IT_duration_done___ = True
+        v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'motion':
         if v.IT_duration_done___:
             if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) >= v.min_IT_movement:
