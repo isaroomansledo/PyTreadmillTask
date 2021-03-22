@@ -22,9 +22,8 @@ events = ['motion',
           'session_timer',
           'IT_duration_elapsed',
           'odour_duration_elapsed',
-          'odour_release_delay_elapsed',
           'reward_duration',
-          'penalty_duration'
+          'penalty_duration',
           ]
 
 initial_state = 'intertrial'
@@ -47,13 +46,12 @@ v.min_IT_duration = 1 * second
 v.IT_duration_done___ = False
 
 # trial params
-v.odour_release_delay = 1  # second
-v.odour_delay_done___ = False
 v.max_odour_time = 10 * second
 v.max_odour_movement = 50  # cm
 v.distance_to_target = 20  # cm
 v.target_angle_tolerance = math.pi / 18  # deg_rad
 v.odourant_direction = -1
+v.air_off_duration = 1 * second
 
 # -------------------------------------------------------------------------
 # Define behaviour.
@@ -98,34 +96,26 @@ def trial_start(event):
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
         v.trial_number += 1
         print('{}, trial_number'.format(v.trial_number))
-        hw.odourDelivery.clean_air_on()
-    elif event == 'motion':
-        # TODO: implement the criteria
-        hw.odourDelivery.clean_air_on()
+        hw.odourDelivery.all_off()
+        timed_goto_state('odour_release', v.air_off_duration)
 
 
 def odour_release(event):
     if event == 'entry':
-        hw.odourDelivery.all_off()
-        v.odour_delay_done___ = False
-        set_timer('odour_release_delay_elapsed', v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
-    elif event == 'odour_release_delay_elapsed':  # release the odour
-        v.odour_delay_done___ = True
         v.odourant_direction = init_odour.release_single_odourant_random(hw.odourDelivery)
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'motion':
-        if v.odour_delay_done___:
-            arrived = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y),
-                                                   v.odourant_direction,
-                                                   v.distance_to_target,
-                                                   v.target_angle_tolerance)
-            if arrived is None:
-                pass
-            elif arrived is True:
-                goto_state('reward')
-            elif arrived is False:
-                goto_state('penalty')
+        arrived = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y),
+                                                v.odourant_direction,
+                                                v.distance_to_target,
+                                                v.target_angle_tolerance)
+        if arrived is None:
+            pass
+        elif arrived is True:
+            goto_state('reward')
+        elif arrived is False:
+            goto_state('penalty')
     elif event == 'odour_duration_elapsed':
         goto_state('penalty')
 
