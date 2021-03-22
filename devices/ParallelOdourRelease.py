@@ -31,6 +31,9 @@ class ParallelOdourRelease():
                 self.__dict__[self._sol_name(dir, stim)].off()
 
     def clean_air_on(self):
+        """
+        Odour ==0 for clean air, for any direction
+        """
         for dir in range(self.Ndirections):
             self.__dict__[self._sol_name(dir, 0)].on()
 
