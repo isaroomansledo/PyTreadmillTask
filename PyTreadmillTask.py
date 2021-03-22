@@ -92,21 +92,21 @@ def trial_start(event):
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
         v.trial_number += 1
         print('{}, trial_number'.format(v.trial_number))
-        odourDelivery.clean_air_on()
+        hw.odourDelivery.clean_air_on()
     elif event == 'motion':
         # TODO: implement the criteria
-        odourDelivery.clean_air_on()
+        hw.odourDelivery.clean_air_on()
 
 
 def odour_release(event):
     if event == 'entry':
-        odourDelivery.all_off()
+        hw.odourDelivery.all_off()
         v.odour_delay_done___ = False
         set_timer('odour_release_delay_elapsed', v.odour_release_delay)
         set_timer('odour_duration_elapsed', v.max_odour_time)
     elif event == 'odour_release_delay_elapsed':  # release the odour
         v.odour_delay_done___ = True
-        v.odourant_direction = init_odour.release_single_odourant_random(odourDelivery)
+        v.odourant_direction = init_odour.release_single_odourant_random(hw.odourDelivery)
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'motion':
         if v.odour_delay_done___:
@@ -128,9 +128,9 @@ def reward(event):
     if event == 'entry':
         disarm_timer('odour_duration_elapsed')
         set_timer('reward_duration', v.reward_duration, False)
-        rewardSol.on()
+        hw.rewardSol.on()
     elif event == 'reward_duration':
-        rewardSol.off()
+        hw.rewardSol.off()
         disarm_timer('reward_duration')
         goto_state('intertrial')
 
