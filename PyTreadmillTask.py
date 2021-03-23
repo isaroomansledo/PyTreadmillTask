@@ -76,8 +76,9 @@ def run_end():
 # State behaviour functions.
 def intertrial(event):
     if event == 'entry':
-        # coded so that at this point, there is clean air coming from ecery direction
+        # coded so that at this point, there is clean air coming from every direction
         set_timer('IT_duration_elapsed', v.min_IT_duration)
+        v.IT_duration_done___ = False
     elif event == 'lick':
         # TODO: handle the lick data better
         pass
@@ -87,7 +88,6 @@ def intertrial(event):
     elif event == 'motion':
         if v.IT_duration_done___:
             if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) >= v.min_IT_movement:
-                v.IT_duration_done___ = False
                 goto_state('trial_start')
 
 
@@ -127,6 +127,7 @@ def reward(event):
         hw.odourDelivery.clean_air_on()
         set_timer('reward_duration_elapsed', v.reward_duration, False)
         hw.rewardSol.on()
+        print('{}, reward_on'.format(get_current_time()))
     elif event == 'reward_duration_elapsed':
         hw.rewardSol.off()
         disarm_timer('reward_duration_elapsed')
@@ -137,6 +138,7 @@ def penalty(event):
     if event == 'entry':
         disarm_timer('odour_duration_elapsed')
         hw.odourDelivery.clean_air_on()
+        print('{}, penalty_on'.format(get_current_time()))
         timed_goto_state('intertrial', v.penalty_duration)
 
 
@@ -147,10 +149,9 @@ def all_states(event):
     if event == 'motion':
         # read the motion registers and and append the variables
         delta_x, delta_y = hw.motionSensor.read_pos()
+        print('{},{}, dM'.format(delta_x, delta_y))
         v.delta_x.append(delta_x)
         v.delta_y.append(delta_y)
-
-        print('{},{}'.format(v.delta_x[-1], v.delta_y[-1]))
 
     elif event == 'session_timer':
         stop_framework()
