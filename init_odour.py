@@ -1,6 +1,5 @@
 from pyControl.utility import *
-from devices import *
-import utime, math
+import math
 
 
 def release_single_odourant_random(odourDevice: ParallelOdourRelease):
@@ -22,6 +21,7 @@ _target_angle = {0: 5 * _pi / 6,
                  2: _pi / 2,
                  3: _pi / 3,
                  4: _pi / 6}
+_audio_freq_range = (10000, 20000)  # between 10kHz and 20kHz, loosely based on Heffner & Heffner 2007
 
 
 def arrived_to_target(dX: float, dY: float,
@@ -44,3 +44,18 @@ def arrived_to_target(dX: float, dY: float,
             return True
         else:
             return False
+
+
+def audio_mapping(d_a: float) -> float:
+    """
+    freq = (-10kHz/300)d_a + 15kHz
+    """
+    return mean(_audio_freq_range) - (_audio_freq_range[0] * d_a / _target_angle[0] * 2)
+
+
+def audio_feedback(speaker,
+                   dX: float, dY: float,
+                   odourant_direction: int):
+    angle = math.atan2(dY, dX)
+    audio_freq = audio_mapping(angle - _target_angle[odourant_direction])
+    speaker.sine(audio_freq)
