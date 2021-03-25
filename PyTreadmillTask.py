@@ -109,10 +109,15 @@ def odour_release(event):
         v.odourant_direction = init_odour.release_single_odourant_random(hw.odourDelivery)
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'motion':
-        arrived = init_odour.arrived_to_target(sum(v.delta_x), sum(v.delta_y),
-                                                v.odourant_direction,
-                                                v.distance_to_target,
-                                                v.target_angle_tolerance)
+        D_x = sum(v.delta_x)
+        D_y = sum(v.delta_y)
+        arrived = init_odour.arrived_to_target(D_x, D_y,
+                                               v.odourant_direction,
+                                               v.distance_to_target,
+                                               v.target_angle_tolerance)
+
+        init_odour.audio_feedback(hw.speaker, D_x, D_y, v.odourant_direction)
+
         if arrived is None:
             pass
         elif arrived is True:
