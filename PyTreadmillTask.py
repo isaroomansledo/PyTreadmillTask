@@ -63,6 +63,8 @@ def run_start():
     # Code here is executed when the framework starts running.
     set_timer('session_timer', v.session_duration, True)
     hw.motionSensor.power_up()
+    hw.speaker.set_volume(90)
+    hw.speaker.off()
     hw.odourDelivery.clean_air_on()
 
 
