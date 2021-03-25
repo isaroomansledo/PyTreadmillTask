@@ -111,6 +111,7 @@ def odour_release(event):
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'exit':
         disarm_timer('odour_duration_elapsed')
+        hw.speaker.off()
     elif event == 'motion':
         D_x = sum(v.delta_x)
         D_y = sum(v.delta_y)
