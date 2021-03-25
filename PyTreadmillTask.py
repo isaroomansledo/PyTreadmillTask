@@ -81,6 +81,8 @@ def intertrial(event):
         # coded so that at this point, there is clean air coming from every direction
         set_timer('IT_duration_elapsed', v.min_IT_duration)
         v.IT_duration_done___ = False
+    elif event == 'exit':
+        disarm_timer('IT_duration_elapsed')
     elif event == 'lick':
         # TODO: handle the lick data better
         pass
@@ -95,7 +97,6 @@ def intertrial(event):
 
 def trial_start(event):
     if event == 'entry':
-        disarm_timer('IT_duration_elapsed')
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
         v.trial_number += 1
         print('{}, trial_number'.format(v.trial_number))
@@ -108,6 +109,8 @@ def odour_release(event):
         set_timer('odour_duration_elapsed', v.max_odour_time)
         v.odourant_direction = init_odour.release_single_odourant_random(hw.odourDelivery)
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
+    elif event == 'exit':
+        disarm_timer('odour_duration_elapsed')
     elif event == 'motion':
         D_x = sum(v.delta_x)
         D_y = sum(v.delta_y)
@@ -130,20 +133,19 @@ def odour_release(event):
 
 def reward(event):
     if event == 'entry':
-        disarm_timer('odour_duration_elapsed')
         hw.odourDelivery.clean_air_on()
         set_timer('reward_duration_elapsed', v.reward_duration, False)
         hw.rewardSol.on()
         print('{}, reward_on'.format(get_current_time()))
+    elif event == 'exit':
+        disarm_timer('reward_duration_elapsed')
     elif event == 'reward_duration_elapsed':
         hw.rewardSol.off()
-        disarm_timer('reward_duration_elapsed')
         goto_state('intertrial')
 
 
 def penalty(event):
     if event == 'entry':
-        disarm_timer('odour_duration_elapsed')
         hw.odourDelivery.clean_air_on()
         print('{}, penalty_on'.format(get_current_time()))
         timed_goto_state('intertrial', v.penalty_duration)
