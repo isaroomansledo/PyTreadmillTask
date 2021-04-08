@@ -5,7 +5,6 @@ import hardware_definition as hw
 from devices import *
 import math
 import uarray
-import init_odour
 
 # -------------------------------------------------------------------------
 # States and events.
@@ -171,7 +170,7 @@ def trial_start(event):
 def odour_release(event):
     if event == 'entry':
         set_timer('odour_duration_elapsed', v.max_odour_time)
-        v.odourant_direction = init_odour.release_single_odourant_random(hw.odourDelivery)
+        v.odourant_direction = release_single_odourant_random(hw.odourDelivery)
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'exit':
         disarm_timer('odour_duration_elapsed')
@@ -179,12 +178,12 @@ def odour_release(event):
     elif event == 'motion':
         D_x = sum(v.delta_x)
         D_y = sum(v.delta_y)
-        arrived = init_odour.arrived_to_target(D_x, D_y,
+        arrived = arrived_to_target(D_x, D_y,
                                                v.odourant_direction,
                                                v.distance_to_target,
                                                v.target_angle_tolerance)
 
-        init_odour.audio_feedback(hw.speaker, D_x, D_y, v.odourant_direction)
+        audio_feedback(hw.speaker, D_x, D_y, v.odourant_direction)
 
         if arrived is None:
             pass
