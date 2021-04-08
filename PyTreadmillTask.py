@@ -178,9 +178,9 @@ def odour_release(event):
         D_x = sum(v.delta_x)
         D_y = sum(v.delta_y)
         arrived = arrived_to_target(D_x, D_y,
-                                               v.odourant_direction,
-                                               v.distance_to_target,
-                                               v.target_angle_tolerance)
+                                    v.odourant_direction,
+                                    v.distance_to_target,
+                                    v.target_angle_tolerance)
 
         audio_feedback(hw.speaker, D_x, D_y, v.odourant_direction)
 
