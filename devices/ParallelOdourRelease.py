@@ -19,9 +19,9 @@ class ParallelOdourRelease():
         counter = 0
         for dir in range(Ndirections):
             for stim in range(NstimPerDir):
-                tmp = _h.Digital_output(pin=pins[counter])
-                self.__dict__[self._sol_name(dir, stim)] = tmp
-                tmp.off()
+                sol = self._sol_name(dir, stim)
+                setattr(self, sol, _h.Digital_output(pin=pins[counter]))
+                getattr(self, sol).off()
 
                 counter += 1
 
