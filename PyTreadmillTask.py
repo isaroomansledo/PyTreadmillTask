@@ -30,6 +30,14 @@ initial_state = 'intertrial'
 # Variables.
 # -------------------------------------------------------------------------
 
+# general parameters
+v.target_angle___ = {0: 5 * math.pi / 6,
+                     1: 2 * math.pi / 3,
+                     2: math.pi / 2,
+                     3: math.pi / 3,
+                     4: math.pi / 6}
+
+v.audio_f_range___ = (10000, 20000)  # between 10kHz and 20kHz, loosely based on Heffner & Heffner 2007
 
 # session params
 v.session_duration = 1 * hour
@@ -70,15 +78,6 @@ def release_single_odourant_random(odourDevice: ParallelOdourRelease):
     return stimDir
 
 
-_pi = math.pi
-_target_angle = {0: 5 * _pi / 6,
-                 1: 2 * _pi / 3,
-                 2: _pi / 2,
-                 3: _pi / 3,
-                 4: _pi / 6}
-_audio_freq_range = (10000, 20000)  # between 10kHz and 20kHz, loosely based on Heffner & Heffner 2007
-
-
 def arrived_to_target(dX: float, dY: float,
                       odourant_direction: int,
                       distance_to_target: float,
@@ -95,7 +94,7 @@ def arrived_to_target(dX: float, dY: float,
 
     else:
         move_angle = math.atan2(dY, dX)
-        if abs(move_angle - _target_angle[odourant_direction]) < target_angle_tolerance:
+        if abs(move_angle - v.target_angle___[odourant_direction]) < target_angle_tolerance:
             return True
         else:
             return False
@@ -105,14 +104,14 @@ def audio_mapping(d_a: float) -> float:
     """
     freq = (-10kHz/300)d_a + 15kHz
     """
-    return mean(_audio_freq_range) - (_audio_freq_range[0] * d_a / _target_angle[0] * 2)
+    return mean(v.audio_f_range___) - (v.audio_f_range___[0] * d_a / v.target_angle___[0] * 2)
 
 
 def audio_feedback(speaker,
                    dX: float, dY: float,
                    odourant_direction: int):
     angle = math.atan2(dY, dX)
-    audio_freq = audio_mapping(angle - _target_angle[odourant_direction])
+    audio_freq = audio_mapping(angle - v.target_angle___[odourant_direction])
     speaker.sine(audio_freq)
 
 
