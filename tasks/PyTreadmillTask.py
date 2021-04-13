@@ -13,13 +13,16 @@ states = ['intertrial',
           'trial_start']
 
 initial_state = 'intertrial'
+events = [
+          'session_timer'
+          ]
 
 # -------------------------------------------------------------------------
 # Variables.
 # -------------------------------------------------------------------------
 
 # general parameters
-v.rand_angle = uarray.array('i')
+v.rand_angle = uarray.array('d')
 
 # -------------------------------------------------------------------------
 # Define behaviour.
@@ -42,11 +45,14 @@ def trial_start(event):
 
 def intertrial(event):
     if event == 'entry':
+        set_timer('session_timer', 10, True)    
         print('{}, timeBeforeRand'.format(get_current_time()))
         for i in range (1000):
             v.rand_angle.append(random()*6.28)
 
         print('{}, timeAfterRand'.format(get_current_time()))
         goto_state('trial_start')
-
-
+        
+def all_states(event):
+    if event == 'session_timer':
+        stop_framework()
