@@ -33,7 +33,8 @@ v.rand_angle = uarray.array('d')
 def trial_start(event):
     if event == 'entry':
         if len(v.rand_angle) > 1:
-            math.atan2(v.rand_angle.pop(), 1)
+            math.atan2(v.rand_angle[-1], 1)
+            del v.rand_angle[-1]
 
             goto_state('trial_start2')
         else:
@@ -44,7 +45,8 @@ def trial_start(event):
 def trial_start2(event):
     if event == 'entry':
         if len(v.rand_angle) > 1:
-            math.atan2(v.rand_angle.pop(), 1)
+            math.atan2(v.rand_angle[-1], 1)
+            del v.rand_angle[-1]
 
             goto_state('trial_start')
         else:
