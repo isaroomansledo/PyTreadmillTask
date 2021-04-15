@@ -32,13 +32,24 @@ v.rand_angle = uarray.array('d')
 
 def trial_start(event):
     if event == 'entry':
-        print('timeBeforeATan')
-        for angle in v.rand_angle:
-            math.atan2(angle, 1)
-        
-        print('timeAfterATan')
+        if len(v.rand_angle) > 1:
+            math.atan2(v.rand_angle.pop(), 1)
 
-        stop_framework()
+            goto_state('trial_start2')
+        else:
+            print('endAtan')
+            stop_framework()
+
+
+def trial_start2(event):
+    if event == 'entry':
+        if len(v.rand_angle) > 1:
+            math.atan2(v.rand_angle.pop(), 1)
+
+            goto_state('trial_start')
+        else:
+            print('endAtan')
+            stop_framework()
 
 
 def intertrial(event):
@@ -48,7 +59,7 @@ def intertrial(event):
         for i in range(1000):
             v.rand_angle.append(random() * 6.28)
 
-        print('timeAfterRand')
+        print('timeAfterRandGeneration')
         goto_state('trial_start')
 
 
