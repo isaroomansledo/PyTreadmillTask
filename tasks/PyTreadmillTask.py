@@ -22,7 +22,8 @@ initial_state = 'intertrial'
 
 # general parameters
 v.rand_angle = uarray.array('d')
-
+v.index = 0
+v.L = 1000
 # -------------------------------------------------------------------------
 # Define behaviour.
 # -------------------------------------------------------------------------
@@ -32,9 +33,9 @@ v.rand_angle = uarray.array('d')
 
 def trial_start(event):
     if event == 'entry':
-        if len(v.rand_angle) > 1:
-            math.atan2(v.rand_angle[-1], 1)
-            del v.rand_angle[-1]
+        if len(v.index) < v.L:
+            math.atan2(v.rand_angle[v.index], 1)
+            v.index += 1
 
             goto_state('trial_start2')
         else:
@@ -44,9 +45,9 @@ def trial_start(event):
 
 def trial_start2(event):
     if event == 'entry':
-        if len(v.rand_angle) > 1:
-            math.atan2(v.rand_angle[-1], 1)
-            del v.rand_angle[-1]
+        if len(v.index) < v.L:
+            math.atan2(v.rand_angle[v.index], 1)
+            v.index += 1
 
             goto_state('trial_start')
         else:
