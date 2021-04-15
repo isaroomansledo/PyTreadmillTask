@@ -33,7 +33,7 @@ v.L = 1000
 
 def trial_start(event):
     if event == 'entry':
-        if len(v.index) < v.L:
+        if v.index < v.L:
             math.atan2(v.rand_angle[v.index], 1)
             v.index += 1
 
@@ -45,7 +45,7 @@ def trial_start(event):
 
 def trial_start2(event):
     if event == 'entry':
-        if len(v.index) < v.L:
+        if v.index < v.L:
             math.atan2(v.rand_angle[v.index], 1)
             v.index += 1
 
