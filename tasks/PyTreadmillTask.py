@@ -59,7 +59,7 @@ def intertrial(event):
     if event == 'entry':
         set_timer('session_timer', 10, True)
         print('timeBeforeRand')
-        for i in range(1000):
+        for i in range(v.L):
             v.rand_angle.append(random() * 6.28)
 
         print('timeAfterRandGeneration')
