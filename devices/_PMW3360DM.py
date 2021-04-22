@@ -124,6 +124,22 @@ class PMW3360DM():
         self.write_register(2, 0)  # not sure about this line: write an arbitrary value to the motion register
         self.select.off()
 
+    def shut_down(self):
+        """
+        Perform the shut down sequence
+        As per page 27 of datasheet
+        """
+        self.select.off()
+        utime.sleep_ms(1)
+        self.select.on()
+        utime.sleep_ms(1)
+        self.reset.on()
+        utime.sleep_ms(60)
+        self.read_pos()
+        utime.sleep_ms(1)
+        self.select.off()
+        utime.sleep_ms(1)
+
     def download_srom(self, srom):
         # flip the MSB to 1:
         addrs = 0x62
