@@ -119,8 +119,6 @@ class PMW3360DM():
         # 8
         self.write_register(0x10, 0x00)
 
-        print('{}, SROM ID, DONE!'.format(ID))  # Id must not equal zero
-
         self.write_register(2, 0)  # not sure about this line: write an arbitrary value to the motion register
         self.select.off()
 
