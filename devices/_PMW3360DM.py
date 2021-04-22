@@ -19,11 +19,11 @@ class PMW3360DM():
         SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 0,
                      'bits': 8, 'firstbit': machine.SPI.MSB}
         if '1' in SPI_type:
-            self.SPI = machine.SPI(id=0, **SPIparams)
+            self.SPI = machine.SPI(0, **SPIparams)
             self.select = _h.Digital_output(pin='W7', inverted=True)
 
         elif '2' in SPI_type:
-            self.SPI = machine.SPI(id=1, **SPIparams)
+            self.SPI = machine.SPI(1, **SPIparams)
             self.select = _h.Digital_output(pin='W45', inverted=True)
 
         elif 'soft' in SPI_type.lower():
