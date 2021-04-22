@@ -5,7 +5,6 @@ import hardware_definition as hw
 from devices import *
 import math
 import uarray
-import init_odour
 
 # -------------------------------------------------------------------------
 # States and events.
