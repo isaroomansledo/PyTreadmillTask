@@ -36,6 +36,10 @@ class PMW3360DM():
         self.motion = _h.Digital_input(pin=MT, falling_event=eventName)
         self.reset = _h.Digital_output(pin=reset, inverted=True)
 
+        self.select.off()
+        self.reset.off()
+
+
     def read_pos(self):
         # read Motion register to lock the content of delta registers
         self.read_register(2)
