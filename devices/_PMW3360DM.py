@@ -74,8 +74,7 @@ class PMW3360DM():
         addrs = addrs.to_bytes(1, 'big')
         data = data.to_bytes(1, 'big')
         self.select.on()
-        self.SPI.write(addrs)
-        self.SPI.write(data)
+        self.SPI.write(addrs + data)
         utime.sleep_us(35)
         self.select.off()
 
