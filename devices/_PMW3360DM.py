@@ -101,20 +101,21 @@ class PMW3360DM():
         # SROM Download
         # As per page 23 of datasheet
         # 2
-        val = self.read_register(0x10)
         val = int.from_bytes(self.read_register(0x10), 'big', True)
+        val = val & 0b1101_1111
         self.write_register(0x10, val)
         utime.sleep_ms(1)
         # 3
         self.write_register(0x13, 0x1d)
         # 4
-        utime.sleep_ms(15)
+        utime.sleep_ms(10)
         # 5
         self.write_register(0x13, 0x18)
         # 6
         self.download_srom(PROGMEM)
         # 7
-        ID = self.read_register(0x2a)
+        ID = int.from_bytes(self.read_register(0x2a), 'big', True)
+        assert ID == 0x04, "bad SROM v={}".format(ID)
         utime.sleep_ms(1)
         # 8
         self.write_register(0x10, 0x00)
