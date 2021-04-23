@@ -148,7 +148,7 @@ class PMW3360DM():
     def download_srom(self, srom):
         self.select.on()
         # flip the MSB to 1:
-        self.SPI.write(0x62 | 0x80 .to_bytes(1, 'big'))
+        self.SPI.write((0x62 | 0x80) .to_bytes(1, 'big'))
         utime.sleep_us(15)
         for srom_byte in srom:
             self.SPI.write(srom_byte.to_bytes(1, 'big'))
