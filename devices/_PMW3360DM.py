@@ -17,13 +17,13 @@ class PMW3360DM():
 
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
         SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 0,
-                     'bits': 8, 'firstbit': machine.SPI.MSB}
+                     'bits': 8, 'firstbit': pyb.SPI.MSB}
         if '1' in SPI_type:
-            self.SPI = machine.SPI(1, **SPIparams)
+            self.SPI = pyb.SPI(1, pyb.SPI.MASTER, **SPIparams)
             self.select = _h.Digital_output(pin='W7', inverted=True)
 
         elif '2' in SPI_type:
-            self.SPI = machine.SPI(2, **SPIparams)
+            self.SPI = pyb.SPI(2, pyb.SPI.MASTER, **SPIparams)
             self.select = _h.Digital_output(pin='W45', inverted=True)
 
         elif 'soft' in SPI_type.lower():
@@ -35,10 +35,9 @@ class PMW3360DM():
 
         self.motion = _h.Digital_input(pin=MT, falling_event=eventName)
         self.reset = _h.Digital_output(pin=reset, inverted=True)
-
+        
         self.select.off()
         self.reset.off()
-
 
     def read_pos(self):
         # read Motion register to lock the content of delta registers
@@ -61,12 +60,16 @@ class PMW3360DM():
         """
         addrs < 128
         """
+        # ensure MSB=0
+        addrs = addrs  & 0x7f 
         addrs = addrs.to_bytes(1, 'big')
         self.select.on()
         self.SPI.write(addrs)
+        utime.sleep_us(100) # tSRAD
         data = self.SPI.read(1)
+        utime.sleep_us(1) # tSCLK-NCS for read operation is 120ns
         self.select.off()
-        utime.sleep_us(20)
+        utime.sleep_us(20) # tSRW/tSRR (=20us) minus tSCLK-NCS
         return data
 
     def write_register(self, addrs: int, data: int):
@@ -74,13 +77,15 @@ class PMW3360DM():
         addrs < 128
         """
         # flip the MSB to 1:
-        addrs = addrs | 0b1000_0000
+        addrs = addrs | 0x80
         addrs = addrs.to_bytes(1, 'big')
         data = data.to_bytes(1, 'big')
         self.select.on()
-        self.SPI.write(addrs + data)
-        utime.sleep_us(35)
+        self.SPI.write(addrs)
+        self.SPI.write(data)
+        utime.sleep_us(20)  # tSCLK-NCS for write operation
         self.select.off()
+        utime.sleep_us(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound 
 
     def power_up(self):
         """
@@ -92,10 +97,9 @@ class PMW3360DM():
         utime.sleep_ms(1)
         self.select.on()
         utime.sleep_ms(1)
-        # 3
-        self.reset.on()
-        utime.sleep_ms(1)
-        self.reset.off()
+        self.select.off()
+        # 3        
+        self.write_register(0x3a, 0x5a)
         # 4
         utime.sleep_ms(60)
         # 5
@@ -122,8 +126,10 @@ class PMW3360DM():
         utime.sleep_ms(1)
         # 8
         self.write_register(0x10, 0x00)
-
-        self.write_register(2, 0)  # not sure about this line: write an arbitrary value to the motion register
+        
+        
+        self.write_register(0x0f,0x31)  # CPI setting=5000
+        # self.write_register(2, 0)  # not sure about this line: write an arbitrary value to the motion register
         self.select.off()
 
     def shut_down(self):
@@ -144,12 +150,13 @@ class PMW3360DM():
 
     def download_srom(self, srom):
         # flip the MSB to 1:
-        addrs = 0x62
+        addrs = 0x62 | 0x1000_0000
         addrs = addrs.to_bytes(1, 'big')
-        
+        self.select.on()
         self.SPI.write(addrs)
+        utime.sleep_us(15)
         for srom_byte in srom:
             self.SPI.write(srom_byte.to_bytes(1, 'big'))
-            utime.sleep_us(20)
+            utime.sleep_us(15)
         
-        utime.sleep_ms(1)
+        self.select.off()
