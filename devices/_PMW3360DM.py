@@ -16,7 +16,7 @@ class PMW3360DM():
                  SCK: str = None):
 
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
-        SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 0,
+        SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 1,
                      'bits': 8, 'firstbit': pyb.SPI.MSB}
         if '1' in SPI_type:
             self.SPI = pyb.SPI(1, pyb.SPI.MASTER, **SPIparams)
@@ -61,15 +61,15 @@ class PMW3360DM():
         addrs < 128
         """
         # ensure MSB=0
-        addrs = addrs  & 0x7f 
+        addrs = addrs & 0x7f
         addrs = addrs.to_bytes(1, 'big')
         self.select.on()
         self.SPI.write(addrs)
-        utime.sleep_us(100) # tSRAD
+        utime.sleep_us(100)  # tSRAD
         data = self.SPI.read(1)
-        utime.sleep_us(1) # tSCLK-NCS for read operation is 120ns
+        utime.sleep_us(1)  # tSCLK-NCS for read operation is 120ns
         self.select.off()
-        utime.sleep_us(20) # tSRW/tSRR (=20us) minus tSCLK-NCS
+        utime.sleep_us(20)  # tSRW/tSRR (=20us) minus tSCLK-NCS
         return data
 
     def write_register(self, addrs: int, data: int):
@@ -94,24 +94,19 @@ class PMW3360DM():
         """
         # 2
         self.select.off()
-        utime.sleep_ms(1)
         self.select.on()
-        utime.sleep_ms(1)
         self.select.off()
-        # 3        
+        # 3
         self.write_register(0x3a, 0x5a)
         # 4
-        utime.sleep_ms(60)
+        utime.sleep_ms(50)
         # 5
         self.read_pos()
 
         # SROM Download
         # As per page 23 of datasheet
         # 2
-        val = int.from_bytes(self.read_register(0x10), 'big', True)
-        val = val & 0b1101_1111
-        self.write_register(0x10, val)
-        utime.sleep_ms(1)
+        self.write_register(0x10, 0x20)
         # 3
         self.write_register(0x13, 0x1d)
         # 4
@@ -123,14 +118,16 @@ class PMW3360DM():
         # 7
         ID = int.from_bytes(self.read_register(0x2a), 'big', True)
         assert ID == 0x04, "bad SROM v={}".format(ID)
-        utime.sleep_ms(1)
         # 8
+        # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design.
         self.write_register(0x10, 0x00)
-        
-        
-        self.write_register(0x0f,0x31)  # CPI setting=5000
+
+        # set initial CPI resolution
+        self.write_register(0x0f, 0x15)  # CPI setting=5000
         # self.write_register(2, 0)  # not sure about this line: write an arbitrary value to the motion register
         self.select.off()
+
+        utime.sleep_ms(10)
 
     def shut_down(self):
         """
@@ -149,14 +146,12 @@ class PMW3360DM():
         utime.sleep_ms(1)
 
     def download_srom(self, srom):
-        # flip the MSB to 1:
-        addrs = 0x62 | 0x1000_0000
-        addrs = addrs.to_bytes(1, 'big')
         self.select.on()
-        self.SPI.write(addrs)
+        # flip the MSB to 1:
+        self.SPI.write(0x62 | 0x80 .to_bytes(1, 'big'))
         utime.sleep_us(15)
         for srom_byte in srom:
             self.SPI.write(srom_byte.to_bytes(1, 'big'))
             utime.sleep_us(15)
-        
+
         self.select.off()
