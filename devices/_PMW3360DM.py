@@ -1,4 +1,4 @@
-import pyb, machine, utime
+import pyb, machine
 import pyControl.hardware as _h
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
@@ -65,11 +65,11 @@ class PMW3360DM():
         addrs = addrs.to_bytes(1, 'big')
         self.select.on()
         self.SPI.write(addrs)
-        utime.sleep_us(100)  # tSRAD
+        pyb.udelay(100)  # tSRAD
         data = self.SPI.read(1)
-        utime.sleep_us(1)  # tSCLK-NCS for read operation is 120ns
+        pyb.udelay(1)  # tSCLK-NCS for read operation is 120ns
         self.select.off()
-        utime.sleep_us(20)  # tSRW/tSRR (=20us) minus tSCLK-NCS
+        pyb.udelay(20)  # tSRW/tSRR (=20us) minus tSCLK-NCS
         return data
 
     def write_register(self, addrs: int, data: int):
@@ -83,9 +83,9 @@ class PMW3360DM():
         self.select.on()
         self.SPI.write(addrs)
         self.SPI.write(data)
-        utime.sleep_us(20)  # tSCLK-NCS for write operation
+        pyb.udelay(20)  # tSCLK-NCS for write operation
         self.select.off()
-        utime.sleep_us(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound 
+        pyb.udelay(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound 
 
     def power_up(self):
         """
@@ -99,7 +99,7 @@ class PMW3360DM():
         # 3
         self.write_register(0x3a, 0x5a)
         # 4
-        utime.sleep_ms(50)
+        pyb.delay(50)
         # 5
         self.read_pos()
 
@@ -110,7 +110,7 @@ class PMW3360DM():
         # 3
         self.write_register(0x13, 0x1d)
         # 4
-        utime.sleep_ms(10)
+        pyb.delay(10)
         # 5
         self.write_register(0x13, 0x18)
         # 6
@@ -127,7 +127,7 @@ class PMW3360DM():
         # self.write_register(2, 0)  # not sure about this line: write an arbitrary value to the motion register
         self.select.off()
 
-        utime.sleep_ms(10)
+        pyb.delay(10)
 
     def shut_down(self):
         """
@@ -135,23 +135,23 @@ class PMW3360DM():
         As per page 27 of datasheet
         """
         self.select.off()
-        utime.sleep_ms(1)
+        pyb.delay(1)
         self.select.on()
-        utime.sleep_ms(1)
+        pyb.delay(1)
         self.reset.on()
-        utime.sleep_ms(60)
+        pyb.delay(60)
         self.read_pos()
-        utime.sleep_ms(1)
+        pyb.delay(1)
         self.select.off()
-        utime.sleep_ms(1)
+        pyb.delay(1)
 
     def download_srom(self, srom):
         self.select.on()
         # flip the MSB to 1:
         self.SPI.write((0x62 | 0x80) .to_bytes(1, 'big'))
-        utime.sleep_us(15)
+        pyb.udelay(15)
         for srom_byte in srom:
             self.SPI.write(srom_byte.to_bytes(1, 'big'))
-            utime.sleep_us(15)
+            pyb.udelay(15)
 
         self.select.off()
