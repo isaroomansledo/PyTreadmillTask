@@ -40,7 +40,8 @@ class PMW3360DM():
         self.reset.off()
 
     def read_pos(self):
-        # read Motion register to lock the content of delta registers
+        # write and read Motion register to lock the content of delta registers
+        self.write_register(0x02, 0x01)
         self.read_register(0x02)
 
         delta_x_L = self.read_register(0x03)
@@ -101,7 +102,6 @@ class PMW3360DM():
         # 4
         pyb.delay(50)
         # 5
-        self.write_register(0x02, 0x01)
         self.read_pos()
 
         # SROM Download
