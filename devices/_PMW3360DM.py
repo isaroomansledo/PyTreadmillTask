@@ -41,12 +41,12 @@ class PMW3360DM():
 
     def read_pos(self):
         # read Motion register to lock the content of delta registers
-        self.read_register(2)
+        self.read_register(0x02)
 
-        delta_x_L = self.read_register(3)
-        delta_x_H = self.read_register(4)
-        delta_y_L = self.read_register(5)
-        delta_y_H = self.read_register(6)
+        delta_x_L = self.read_register(0x03)
+        delta_x_H = self.read_register(0x04)
+        delta_y_L = self.read_register(0x05)
+        delta_y_H = self.read_register(0x06)
 
         delta_x = delta_x_H + delta_x_L
         delta_y = delta_y_H + delta_y_L
