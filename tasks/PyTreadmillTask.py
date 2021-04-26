@@ -42,6 +42,7 @@ def run_start():
     set_timer('session_timer', v.session_duration, True)
 
     hw.motionSensor.power_up()
+    hw.motionSensor.select.on()
 
 
 def run_end():
@@ -85,6 +86,7 @@ def all_states(event):
         v.delta_y.append(delta_y)
 
         print('{},{}'.format(v.delta_x[-1], v.delta_y[-1]))
+        hw.motionSensor.select.on()
 
     elif event == 'session_timer':
         stop_framework()
