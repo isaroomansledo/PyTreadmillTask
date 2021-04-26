@@ -26,7 +26,7 @@ initial_state = 'intertrial'
 
 
 # session params
-v.session_duration = 300 * second  # 1 * hour
+v.session_duration = 30 * second  # 1 * hour
 v.min_IT_duration = 1 * second
 v.IT_duration_done___ = False
 v.delta_x = uarray.array('i')  # signed int minimm 2 bytes
