@@ -35,7 +35,7 @@ class PMW3360DM():
 
         self.motion = _h.Digital_input(pin=MT, falling_event=eventName)
         self.reset = _h.Digital_output(pin=reset, inverted=True)
-        
+
         self.select.off()
         self.reset.off()
 
@@ -86,7 +86,7 @@ class PMW3360DM():
         self.SPI.write(data)
         pyb.udelay(20)  # tSCLK-NCS for write operation
         self.select.off()
-        pyb.udelay(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound 
+        pyb.udelay(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound
 
     def power_up(self):
         """
