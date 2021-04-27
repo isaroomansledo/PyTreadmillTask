@@ -120,7 +120,7 @@ class PMW3360DM():
         ID = int.from_bytes(self.read_register(0x2a), 'big', True)
         assert ID == 0x04, "bad SROM v={}".format(ID)
         # 8
-        # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design.
+        # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design (Enable/Disable Rest mode)
         self.write_register(0x10, 0x00)
 
         # set initial CPI resolution
