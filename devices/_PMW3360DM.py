@@ -33,7 +33,7 @@ class PMW3360DM():
                                        miso=machine.Pin(id=MI, mode=machine.Pin.IN))
             self.select = _h.Digital_output(pin=CS, inverted=True)
 
-        self.motion = _h.Digital_input(pin=MT, falling_event=eventName)
+        self.motion = _h.Digital_input(pin=MT, falling_event=eventName, pull='up')
         self.reset = _h.Digital_output(pin=reset, inverted=True)
         
         self.select.off()
