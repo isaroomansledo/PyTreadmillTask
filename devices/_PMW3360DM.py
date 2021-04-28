@@ -156,3 +156,46 @@ class PMW3360DM():
             utime.sleep_us(15)
 
         self.select.off()
+
+    def burst_read(self):
+        """
+        Based on Burst mode Page 22
+        reads 12 bytes:
+        BYTE[00] = Motion    = if the 7th bit is 1, a motion is detected.
+            ==> 7 bit: MOT (1 when motion is detected)
+            ==> 3 bit: 0 when chip is on surface / 1 when off surface
+        BYTE[01] = Observation
+        BYTE[02] = Delta_X_L = dx (LSB)
+        BYTE[03] = Delta_X_H = dx (MSB)
+        BYTE[04] = Delta_Y_L = dy (LSB)
+        BYTE[05] = Delta_Y_H = dy (MSB)
+        BYTE[06] = SQUAL     = Surface Quality register, max 0x80
+                            - Number of features on the surface = SQUAL * 8
+        BYTE[07] = Raw_Data_Sum   = It reports the upper byte of an 18‐bit counter which sums all 1296 raw data in the current frame;
+                                * Avg value = Raw_Data_Sum * 1024 / 1296
+        BYTE[08] = Maximum_Raw_Data  = Max raw data value in current frame, max=127
+        BYTE[09] = Minimum_Raw_Data  = Min raw data value in current frame, max=127
+        BYTE[10] = Shutter_Upper     = Shutter LSB
+        BYTE[11] = Shutter_Lower     = Shutter MSB, Shutter = shutter is adjusted to keep the average raw data values within normal operating ranges
+        """
+        # 1
+        self.write_register(0x50, 0x00)
+        # 2
+        self.select.on()
+        # 3
+        self.SPI.write(0x50 .to_bytes(1,'big'))
+        # 4
+        utime.sleep_us(35)  # wait for tSRAD_MOTBR
+        # 5
+        data = self.SPI.read(6)
+        # 6
+        self.select.off()
+        utime.sleep_us(2)
+
+        delta_x = data[3] + data[2]
+        delta_y = data[5] + data[4]
+
+        delta_x = int.from_bytes(delta_x, 'big', True)
+        delta_y = int.from_bytes(delta_y, 'big', True)
+
+        return delta_x, delta_y
