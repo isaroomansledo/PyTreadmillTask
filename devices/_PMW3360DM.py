@@ -183,7 +183,7 @@ class PMW3360DM():
         # 2
         self.select.on()
         # 3
-        self.SPI.write(0x50 .to_bytes(1,'big'))
+        self.SPI.write(0x50 .to_bytes(1, 'big'))
         # 4
         utime.sleep_us(35)  # wait for tSRAD_MOTBR
         # 5
