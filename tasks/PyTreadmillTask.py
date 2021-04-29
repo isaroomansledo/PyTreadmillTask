@@ -19,9 +19,9 @@ states = ['intertrial',
 events = ['motion',
           'lick',
           'session_timer',
-          'IT_duration_elapsed',
-          'odour_duration_elapsed',
-          'reward_duration_elapsed'
+          'IT_timer',
+          'odour_timer',
+          'reward_timer'
           ]
 
 initial_state = 'intertrial'
@@ -141,14 +141,14 @@ def run_end():
 def intertrial(event):
     if event == 'entry':
         # coded so that at this point, there is clean air coming from every direction
-        set_timer('IT_duration_elapsed', v.min_IT_duration)
+        set_timer('IT_timer', v.min_IT_duration)
         v.IT_duration_done___ = False
     elif event == 'exit':
-        disarm_timer('IT_duration_elapsed')
+        disarm_timer('IT_timer')
     elif event == 'lick':
         # TODO: handle the lick data better
         pass
-    elif event == 'IT_duration_elapsed':
+    elif event == 'IT_timer':
         v.IT_duration_done___ = True
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'motion':
@@ -168,11 +168,11 @@ def trial_start(event):
 
 def odour_release(event):
     if event == 'entry':
-        set_timer('odour_duration_elapsed', v.max_odour_time)
+        set_timer('odour_timer', v.max_odour_time)
         v.odourant_direction = release_single_odourant_random(hw.odourDelivery)
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'exit':
-        disarm_timer('odour_duration_elapsed')
+        disarm_timer('odour_timer')
         hw.speaker.off()
     elif event == 'motion':
         D_x = sum(v.delta_x)
@@ -190,19 +190,19 @@ def odour_release(event):
             goto_state('reward')
         elif arrived is False:
             goto_state('penalty')
-    elif event == 'odour_duration_elapsed':
+    elif event == 'odour_timer':
         goto_state('penalty')
 
 
 def reward(event):
     if event == 'entry':
         hw.odourDelivery.clean_air_on()
-        set_timer('reward_duration_elapsed', v.reward_duration, False)
+        set_timer('reward_timer', v.reward_duration, False)
         hw.rewardSol.on()
         print('{}, reward_on'.format(get_current_time()))
     elif event == 'exit':
-        disarm_timer('reward_duration_elapsed')
-    elif event == 'reward_duration_elapsed':
+        disarm_timer('reward_timer')
+    elif event == 'reward_timer':
         hw.rewardSol.off()
         goto_state('intertrial')
 
