@@ -4,33 +4,25 @@ from pyControl.utility import *
 import hardware_definition as hw
 from devices import *
 import math
-import uarray
+import uarray, utime
 
 # -------------------------------------------------------------------------
 # States and events.
 # -------------------------------------------------------------------------
 
-states = ['intertrial',
-          'trial_start']
+states = ['intertrial']
 
-events = ['motion',
-          'session_timer',
-          'IT_duration_elapsed'
-          ]
+events = ['session_timer','burst']
 
 initial_state = 'intertrial'
 
 # -------------------------------------------------------------------------
 # Variables.
 # -------------------------------------------------------------------------
-
+v.flag = False
 
 # session params
-v.session_duration = 30 * second  # 1 * hour
-v.min_IT_duration = 1 * second
-v.IT_duration_done___ = False
-v.delta_x = uarray.array('i')  # signed int minimm 2 bytes
-v.delta_y = uarray.array('i')
+v.session_duration = 300 * second  # 1 * hour
 # -------------------------------------------------------------------------
 # Define behaviour.
 # -------------------------------------------------------------------------
@@ -42,7 +34,9 @@ def run_start():
     set_timer('session_timer', v.session_duration, True)
 
     hw.motionSensor.power_up()
-    hw.motionSensor.select.on()
+    #hw.motionSensor.select.on()
+    
+    set_timer('burst', 1*ms) 
 
 
 def run_end():
@@ -54,39 +48,23 @@ def run_end():
 
 # State behaviour functions.
 def intertrial(event):
-    if event == 'entry':
-        set_timer('IT_duration_elapsed', v.min_IT_duration)
-        hw.led.on()
-    elif event == 'IT_duration_elapsed':
-        v.IT_duration_done___ = True
-    elif event == 'motion':
-        if v.IT_duration_done___:
-            hw.led.off()
-            v.IT_duration_done___ = False
-            goto_state('trial_start')
-
-
-def trial_start(event):
-    if event == 'entry':
-        disarm_timer('IT_duration_elapsed')
-        hw.led2.on()
-    elif event == 'motion':
-        hw.led2.off()
-        goto_state('intertrial')
+    if event == 'motion':
+        print('MO')
+        #hw.motionSensor.select.on()
+    elif event == 'burst':
+        set_timer('burst', 1*ms) 
+    
 
 
 # State independent behaviour.
 def all_states(event):
     # Code here will be executed when any event occurs,
     # irrespective of the state the machine is in.
-    if event == 'motion':
-        # read the motion registers and and append the variables
-        delta_x, delta_y = hw.motionSensor.read_pos()
-        v.delta_x.append(delta_x)
-        v.delta_y.append(delta_y)
-
-        print('{},{}'.format(v.delta_x[-1], v.delta_y[-1]))
-        hw.motionSensor.select.on()
+    if event == 'motion': pass
+    elif event == 'burst':
+        a,b = hw.motionSensor.read_pos()
+        if a != b:
+            print((a,b))
 
     elif event == 'session_timer':
         stop_framework()
