@@ -124,15 +124,15 @@ class PMW3360DM():
         # 6
         self.download_srom(PROGMEM)
         # 7
-        ID = int.from_bytes(self.read_register(0x2a), 'big', True)
+        ID = int.from_bytes(self.read_register(0x2a), 'big')
         assert ID == 0x04, "bad SROM v={}".format(ID)
         # 8
         # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design (Enable/Disable Rest mode)
         self.write_register(0x10, 0x00)
 
         # set initial CPI resolution
-        self.write_register(0x0f, 0x00)  # CPI setting=100
-        self.write_register(0x02, 0x20)  # not sure about this line: write an arbitrary value to the motion register
+        self.write_register(0x0f, 0x77)  # CPI setting=12000
+
         self.select.off()
 
         utime.sleep_ms(10)
