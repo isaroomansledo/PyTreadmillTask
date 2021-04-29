@@ -133,8 +133,11 @@ class PMW3360DM():
         # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design (Enable/Disable Rest mode)
         self.write_register(0x10, 0x00)
 
+        # CONFIGURATION
         # set initial CPI resolution
-        self.write_register(0x0f, 0x77)  # CPI setting=12000
+        self.write_register(0x0f, 0x31)  # CPI setting=5000
+        # set lift detection
+        self.write_register(0x63, 0x03)  # Lift detection: +3mm
 
         self.select.off()
 
