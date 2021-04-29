@@ -44,8 +44,8 @@ v.session_duration = 1 * hour
 v.reward_duration = 100 * ms
 v.penalty_duration = 10 * second
 v.trial_number = 0
-v.motion_timer = 1 * ms  # polls motion every 1ms
-v.new_motion = False  # falg to declare new motion
+v.motion_timer______ = 1 * ms  # polls motion every 1ms
+v.new_motion = False  # flag to declare new motion
 v.delta_x = uarray.array('i')  # signed int minimum 2 bytes
 v.delta_y = uarray.array('i')
 
@@ -130,7 +130,7 @@ def run_start():
     hw.speaker.set_volume(90)
     hw.speaker.off()
     hw.odourDelivery.clean_air_on()
-    set_timer('motion', v.motion_timer)
+    set_timer('motion', v.motion_timer___)
 
 
 def run_end():
@@ -232,7 +232,7 @@ def all_states(event):
             v.delta_x.append(delta_x)
             v.delta_y.append(delta_y)
             v.new_motion = True
-        set_timer('motion', v.motion_timer)
+        set_timer('motion', v.motion_timer___)
 
     elif event == 'session_timer':
         stop_framework()
