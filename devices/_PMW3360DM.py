@@ -2,7 +2,11 @@ import utime, machine
 import pyControl.hardware as _h
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
-
+def twos_comp(val, bits=16):
+    """compute the 2's complement of int value val"""
+    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)        # compute negative value
+    return val                         # return positive value as is
 class PMW3360DM():
     # mouse motion sensor.
     def __init__(self,
