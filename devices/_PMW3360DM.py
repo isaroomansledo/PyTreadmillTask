@@ -179,14 +179,7 @@ class PMW3360DM():
         BYTE[03] = Delta_X_H = dx (MSB)
         BYTE[04] = Delta_Y_L = dy (LSB)
         BYTE[05] = Delta_Y_H = dy (MSB)
-        BYTE[06] = SQUAL     = Surface Quality register, max 0x80
-                            - Number of features on the surface = SQUAL * 8
-        BYTE[07] = Raw_Data_Sum   = It reports the upper byte of an 18‐bit counter which sums all 1296 raw data in the current frame;
-                                * Avg value = Raw_Data_Sum * 1024 / 1296
-        BYTE[08] = Maximum_Raw_Data  = Max raw data value in current frame, max=127
-        BYTE[09] = Minimum_Raw_Data  = Min raw data value in current frame, max=127
-        BYTE[10] = Shutter_Upper     = Shutter LSB
-        BYTE[11] = Shutter_Lower     = Shutter MSB, Shutter = shutter is adjusted to keep the average raw data values within normal operating ranges
+        ...
         """
         # 1
         self.write_register(0x50, 0x00)
