@@ -44,8 +44,8 @@ v.session_duration = 1 * hour
 v.reward_duration = 100 * ms
 v.penalty_duration = 10 * second
 v.trial_number = 0
-v.motion_timer______ = 1 * ms  # polls motion every 1ms
-v.new_motion = False  # flag to declare new motion
+v.motion_timer___ = 1 * ms  # polls motion every 1ms
+v.new_motion___ = False  # flag to declare new motion
 v.delta_x = uarray.array('i')  # signed int minimum 2 bytes
 v.delta_y = uarray.array('i')
 
@@ -155,7 +155,7 @@ def intertrial(event):
         v.IT_duration_done___ = True
         v.delta_x, v.delta_y = uarray.array('i'), uarray.array('i')
     elif event == 'motion':
-        if v.IT_duration_done___ and v.new_motion:
+        if v.IT_duration_done___ and v.new_motion___:
             if math.sqrt((sum(v.delta_x)**2) + (sum(v.delta_x)**2)) >= v.min_IT_movement:
                 goto_state('trial_start')
 
@@ -178,7 +178,7 @@ def odour_release(event):
         disarm_timer('odour_timer')
         hw.speaker.off()
     elif event == 'motion':
-        if v.new_motion:
+        if v.new_motion___:
             D_x = sum(v.delta_x)
             D_y = sum(v.delta_y)
             arrived = arrived_to_target(D_x, D_y,
@@ -226,12 +226,12 @@ def all_states(event):
         # read the motion registers and and append the variables
         delta_x, delta_y = hw.motionSensor.read_pos()
         if delta_x == 0 and delta_y == 0:
-            v.new_motion = False
+            v.new_motion___ = False
         else:
             print('{},{}, dM'.format(delta_x, delta_y))
             v.delta_x.append(delta_x)
             v.delta_y.append(delta_y)
-            v.new_motion = True
+            v.new_motion___ = True
         set_timer('motion', v.motion_timer___)
 
     elif event == 'session_timer':
