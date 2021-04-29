@@ -1,5 +1,3 @@
-# This is an example hardware definition for use with pyControl D-series breakout v1.6
-
 from devices import *
 
 board = Breakout_dseries_1_6()
