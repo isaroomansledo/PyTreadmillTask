@@ -77,7 +77,7 @@ class PMW3360DM():
         data = self.SPI.read(1)
         utime.sleep_us(1)  # tSCLK-NCS for read operation is 120ns
         self.select.off()
-        utime.sleep_us(20)  # tSRW/tSRR (=20us) minus tSCLK-NCS
+        utime.sleep_us(19)  # tSRW/tSRR (=20us) minus tSCLK-NCS
         return data
 
     def write_register(self, addrs: int, data: int):
