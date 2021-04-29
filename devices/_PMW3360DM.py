@@ -56,8 +56,11 @@ class PMW3360DM():
         delta_x = delta_x_H + delta_x_L
         delta_y = delta_y_H + delta_y_L
 
-        delta_x = int.from_bytes(delta_x, 'big', True)
-        delta_y = int.from_bytes(delta_y, 'big', True)
+        delta_x = int.from_bytes(delta_x, 'big')
+        delta_y = int.from_bytes(delta_y, 'big')
+
+        delta_x = twos_comp(delta_x)
+        delta_y = twos_comp(delta_y)
 
         return delta_x, delta_y
 
