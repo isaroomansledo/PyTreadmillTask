@@ -44,7 +44,8 @@ v.session_duration = 1 * hour
 v.reward_duration = 100 * ms
 v.penalty_duration = 10 * second
 v.trial_number = 0
-v.delta_x = uarray.array('i')  # signed int minimm 2 bytes
+v.motion_timer = 1 * ms  # polls motion every 1ms
+v.delta_x = uarray.array('i')  # signed int minimum 2 bytes
 v.delta_y = uarray.array('i')
 
 # intertrial params
@@ -128,6 +129,7 @@ def run_start():
     hw.speaker.set_volume(90)
     hw.speaker.off()
     hw.odourDelivery.clean_air_on()
+    set_timer('motion', v.motion_timer)
 
 
 def run_end():
