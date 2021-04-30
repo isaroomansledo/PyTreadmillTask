@@ -18,6 +18,7 @@ states = ['intertrial',
 
 events = ['motion',
           'lick',
+          'lick_off',
           'session_timer',
           'IT_timer',
           'odour_timer',
