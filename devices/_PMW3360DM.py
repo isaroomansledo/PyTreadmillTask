@@ -21,7 +21,8 @@ class PMW3360DM():
                  MI: str = None,
                  MO: str = None,
                  SCK: str = None):
-
+        
+        self.MT = MT
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
         SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 1,
                      'bits': 8, 'firstbit': machine.SPI.MSB}
@@ -40,7 +41,7 @@ class PMW3360DM():
                                        miso=machine.Pin(id=MI, mode=machine.Pin.IN))
             self.select = _h.Digital_output(pin=CS, inverted=True)
 
-        self.motion = _h.Digital_input(pin=MT, falling_event=eventName, pull='up')
+        self.motion = _h.Digital_input(pin=self.MT, falling_event=eventName, pull='up')
         self.reset = _h.Digital_output(pin=reset, inverted=True)
 
         self.select.off()
@@ -209,20 +210,18 @@ class PMW3360DM():
 
 class MotionDetector(_h.Analog_input):
     # Quadrature output rotary encoder.
-    def __init__(self, name, sampling_rate, 
-                 rising_event=None, falling_event=eventName, bytes_per_sample=4):
+    def __init__(self, name, sampling_rate, reset, MT, event='motion', ):
 
-        threshold = 2000
-        rising_event = None
-        self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=board.port_3.DIO_B, MT=board.port_3.DIO_C)
-        _h.Analog_input.__init__(self, None, name, int(sampling_rate), threshold, rising_event,
-                                 falling_event=falling_event, data_type={2:'h',4:'l'}[bytes_per_sample])
+        threshold = 2000  # halfway between 0V and 3.3V
+        self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset, MT=MT)
+        _h.Analog_input.__init__(self, MT, name, int(sampling_rate), threshold, rising_event=None,
+                                 falling_event=event, data_type='L')
 
     def read_sample(self):
         # Read value of encoder counter, correct for rollover, return position or velocity.
-
-        return self.position
+        x, y = self.sensor.read_pos()
+        return x + y  # 4 bytes
 
     def _start_acquisition(self):
         # Start sampling analog input values.
-        Analog_input._start_acquisition(self)
+        _h.Analog_input._start_acquisition(self)
