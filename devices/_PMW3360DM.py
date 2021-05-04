@@ -212,12 +212,6 @@ class MotionDetector(_h.Analog_input):
     def __init__(self, name, sampling_rate, 
                  rising_event=None, falling_event=eventName, bytes_per_sample=4):
 
-        self.counter_max_value = 0xffff
-        self.counter_half_max_value = self.counter_max_value // 2
-        self.enc_timer = pyb.Timer(2, prescaler=1, period=self.counter_max_value)
-        self.enc_channel = self.enc_timer.channel(1, pyb.Timer.ENC_AB)
-        self.position = 0
-        self.velocity = 0
         threshold = 2000
         rising_event = None
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=board.port_3.DIO_B, MT=board.port_3.DIO_C)
