@@ -1,4 +1,4 @@
-import utime, machine
+import utime, machine, pyb
 import pyControl.hardware as _h
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
@@ -205,3 +205,30 @@ class PMW3360DM():
         delta_y = twos_comp(delta_y)
 
         return delta_x, delta_y
+
+
+class MotionDetector(_h.Analog_input):
+    # Quadrature output rotary encoder.
+    def __init__(self, name, sampling_rate, 
+                 rising_event=None, falling_event=eventName, bytes_per_sample=4):
+
+        self.counter_max_value = 0xffff
+        self.counter_half_max_value = self.counter_max_value // 2
+        self.enc_timer = pyb.Timer(2, prescaler=1, period=self.counter_max_value)
+        self.enc_channel = self.enc_timer.channel(1, pyb.Timer.ENC_AB)
+        self.position = 0
+        self.velocity = 0
+        threshold = 2000
+        rising_event = None
+        self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=board.port_3.DIO_B, MT=board.port_3.DIO_C)
+        _h.Analog_input.__init__(self, None, name, int(sampling_rate), threshold, rising_event,
+                                 falling_event=falling_event, data_type={2:'h',4:'l'}[bytes_per_sample])
+
+    def read_sample(self):
+        # Read value of encoder counter, correct for rollover, return position or velocity.
+
+        return self.position
+
+    def _start_acquisition(self):
+        # Start sampling analog input values.
+        Analog_input._start_acquisition(self)
