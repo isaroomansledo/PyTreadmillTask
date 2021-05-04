@@ -1,6 +1,13 @@
-import pyb, machine
+import utime, machine
 import pyControl.hardware as _h
 from devices.PMW3360DM_srom_0x04 import PROGMEM
+
+
+def twos_comp(val, bits=16):
+    """compute the 2's complement of int value val"""
+    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)        # compute negative value
+    return val                         # return positive value as is
 
 
 class PMW3360DM():
@@ -17,13 +24,13 @@ class PMW3360DM():
 
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
         SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 1,
-                     'bits': 8, 'firstbit': pyb.SPI.MSB}
+                     'bits': 8, 'firstbit': machine.SPI.MSB}
         if '1' in SPI_type:
-            self.SPI = pyb.SPI(1, pyb.SPI.MASTER, **SPIparams)
+            self.SPI = machine.SPI(1, **SPIparams)
             self.select = _h.Digital_output(pin='W7', inverted=True)
 
         elif '2' in SPI_type:
-            self.SPI = pyb.SPI(2, pyb.SPI.MASTER, **SPIparams)
+            self.SPI = machine.SPI(2, **SPIparams)
             self.select = _h.Digital_output(pin='W45', inverted=True)
 
         elif 'soft' in SPI_type.lower():
@@ -33,15 +40,15 @@ class PMW3360DM():
                                        miso=machine.Pin(id=MI, mode=machine.Pin.IN))
             self.select = _h.Digital_output(pin=CS, inverted=True)
 
-        self.motion = _h.Digital_input(pin=MT, falling_event=eventName)
+        self.motion = _h.Digital_input(pin=MT, falling_event=eventName, pull='up')
         self.reset = _h.Digital_output(pin=reset, inverted=True)
-        
+
         self.select.off()
         self.reset.off()
 
     def read_pos(self):
         # write and read Motion register to lock the content of delta registers
-        self.write_register(0x02, 0x20)
+        self.write_register(0x02, 0x01)
         self.read_register(0x02)
 
         delta_x_L = self.read_register(0x03)
@@ -52,8 +59,11 @@ class PMW3360DM():
         delta_x = delta_x_H + delta_x_L
         delta_y = delta_y_H + delta_y_L
 
-        delta_x = int.from_bytes(delta_x, 'big', True)
-        delta_y = int.from_bytes(delta_y, 'big', True)
+        delta_x = int.from_bytes(delta_x, 'big')
+        delta_y = int.from_bytes(delta_y, 'big')
+
+        delta_x = twos_comp(delta_x)
+        delta_y = twos_comp(delta_y)
 
         return delta_x, delta_y
 
@@ -66,11 +76,11 @@ class PMW3360DM():
         addrs = addrs.to_bytes(1, 'big')
         self.select.on()
         self.SPI.write(addrs)
-        pyb.udelay(100)  # tSRAD
+        utime.sleep_us(100)  # tSRAD
         data = self.SPI.read(1)
-        pyb.udelay(1)  # tSCLK-NCS for read operation is 120ns
+        utime.sleep_us(1)  # tSCLK-NCS for read operation is 120ns
         self.select.off()
-        pyb.udelay(20)  # tSRW/tSRR (=20us) minus tSCLK-NCS
+        utime.sleep_us(19)  # tSRW/tSRR (=20us) minus tSCLK-NCS
         return data
 
     def write_register(self, addrs: int, data: int):
@@ -84,9 +94,9 @@ class PMW3360DM():
         self.select.on()
         self.SPI.write(addrs)
         self.SPI.write(data)
-        pyb.udelay(20)  # tSCLK-NCS for write operation
+        utime.sleep_us(20)  # tSCLK-NCS for write operation
         self.select.off()
-        pyb.udelay(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound 
+        utime.sleep_us(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound
 
     def power_up(self):
         """
@@ -100,7 +110,7 @@ class PMW3360DM():
         # 3
         self.write_register(0x3a, 0x5a)
         # 4
-        pyb.delay(50)
+        utime.sleep_ms(50)
         # 5
         self.read_pos()
 
@@ -111,24 +121,27 @@ class PMW3360DM():
         # 3
         self.write_register(0x13, 0x1d)
         # 4
-        pyb.delay(10)
+        utime.sleep_ms(10)
         # 5
         self.write_register(0x13, 0x18)
         # 6
         self.download_srom(PROGMEM)
         # 7
-        ID = int.from_bytes(self.read_register(0x2a), 'big', True)
+        ID = int.from_bytes(self.read_register(0x2a), 'big')
         assert ID == 0x04, "bad SROM v={}".format(ID)
         # 8
-        # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design.
+        # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design (Enable/Disable Rest mode)
         self.write_register(0x10, 0x00)
 
+        # CONFIGURATION
         # set initial CPI resolution
-        self.write_register(0x0f, 0x00)  # CPI setting=100
-        # self.write_register(2, 0)  # not sure about this line: write an arbitrary value to the motion register
+        self.write_register(0x0f, 0x31)  # CPI setting=5000
+        # set lift detection
+        self.write_register(0x63, 0x03)  # Lift detection: +3mm
+
         self.select.off()
 
-        pyb.delay(10)
+        utime.sleep_ms(10)
 
     def shut_down(self):
         """
@@ -136,23 +149,59 @@ class PMW3360DM():
         As per page 27 of datasheet
         """
         self.select.off()
-        pyb.delay(1)
+        utime.sleep_ms(1)
         self.select.on()
-        pyb.delay(1)
+        utime.sleep_ms(1)
         self.reset.on()
-        pyb.delay(60)
+        utime.sleep_ms(60)
         self.read_pos()
-        pyb.delay(1)
+        utime.sleep_ms(1)
         self.select.off()
-        pyb.delay(1)
+        utime.sleep_ms(1)
 
     def download_srom(self, srom):
         self.select.on()
         # flip the MSB to 1:
         self.SPI.write((0x62 | 0x80) .to_bytes(1, 'big'))
-        pyb.udelay(15)
+        utime.sleep_us(15)
         for srom_byte in srom:
             self.SPI.write(srom_byte.to_bytes(1, 'big'))
-            pyb.udelay(15)
+            utime.sleep_us(15)
 
         self.select.off()
+
+    def burst_read(self):
+        """
+        Based on Burst mode Page 22
+        reads 12 bytes:
+        BYTE[00] = Motion    = if the 7th bit is 1, a motion is detected.
+            ==> 7 bit: MOT (1 when motion is detected)
+            ==> 3 bit: 0 when chip is on surface / 1 when off surface
+        BYTE[01] = Observation
+        BYTE[02] = Delta_X_L = dx (LSB)
+        BYTE[03] = Delta_X_H = dx (MSB)
+        BYTE[04] = Delta_Y_L = dy (LSB)
+        BYTE[05] = Delta_Y_H = dy (MSB)
+        ...
+        """
+        # 1
+        self.write_register(0x50, 0x00)
+        # 2
+        self.select.on()
+        # 3
+        self.SPI.write(0x50 .to_bytes(1, 'big'))
+        # 4
+        utime.sleep_us(35)  # wait for tSRAD_MOTBR
+        # 5
+        data = self.SPI.read(6)
+        # 6
+        self.select.off()
+        utime.sleep_us(2)
+
+        delta_x = (data[3] << 8) | data[2]
+        delta_y = (data[5] << 8) | data[4]
+
+        delta_x = twos_comp(delta_x)
+        delta_y = twos_comp(delta_y)
+
+        return delta_x, delta_y
