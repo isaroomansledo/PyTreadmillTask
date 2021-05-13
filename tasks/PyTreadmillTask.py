@@ -31,6 +31,7 @@ def run_start():
     # Code here is executed when the framework starts running.
     set_timer('session_timer', v.session_duration, True)
     hw.motionSensor.power_up()
+    hw.motionSensor.record()
     set_timer('motion', v.motion_timer___)
 
 
@@ -38,6 +39,7 @@ def run_end():
     # Code here is executed when the framework stops running.
     # Turn off all hardware outputs.
     hw.motionSensor.shut_down()
+    hw.motionSensor.stop()
     hw.off()
 
 
