@@ -1,4 +1,5 @@
 import utime, machine, pyb
+from uarray import uarray
 import pyControl.hardware as _h
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
@@ -207,20 +208,52 @@ class PMW3360DM():
 
         return delta_x, delta_y
 
+    def read_register_buff(self, addrs: int, buff):
+        """
+        addrs < 128
+        """
+        # ensure MSB=0
+        addrs = addrs & 0x7f
+        addrs = addrs.to_bytes(1, 'big')
+        self.select.on()
+        self.SPI.write(addrs)
+        utime.sleep_us(100)  # tSRAD
+        self.SPI.readinto(buff)
+        utime.sleep_us(1)  # tSCLK-NCS for read operation is 120ns
+        self.select.off()
+        utime.sleep_us(19)  # tSRW/tSRR (=20us) minus tSCLK-NCS
+        return buff
+
+    def read_pos_buff(self, buff):
+        # write and read Motion register to lock the content of delta registers
+        self.write_register(0x02, 0x01)
+        self.read_register_buff(0x02, buff[0])
+
+        self.read_register_buff(0x03, buff[1])
+        self.read_register_buff(0x04, buff[0])
+        self.read_register_buff(0x05, buff[3])
+        self.read_register_buff(0x06, buff[2])
+        # delta_x_H[0] + delta_x_L[1] + delta_y_H[2] + delta_y_L[3]
+
 
 class MotionDetector(_h.Analog_input):
     # Quadrature output rotary encoder.
     def __init__(self, name, sampling_rate, reset, MT, event='motion'):
 
         threshold = 2000  # halfway between 0V and 3.3V
+        self.motionBuffer = bytearray([0x00, 0x00, 0x00, 0x00])  # uarray('L', 4)
+
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset, MT=MT)
         _h.Analog_input.__init__(self, MT, name, int(sampling_rate), threshold, rising_event=None,
                                  falling_event=event, data_type='L')
 
     def read_sample(self):
         # Read value of encoder counter, correct for rollover, return position or velocity.
-        x, y = self.sensor.read_pos()
-        return x + y  # 4 bytes
+        self.sensor.read_pos_buff(self.motionBuffer)
+        delta_x = int.from_bytes(self.motionBuffer[:2], 'big')
+        delta_y = int.from_bytes(self.motionBuffer[2:], 'big')
+
+        return delta_x + delta_y  # 4 bytes
 
     def _start_acquisition(self):
         # Start sampling analog input values.
