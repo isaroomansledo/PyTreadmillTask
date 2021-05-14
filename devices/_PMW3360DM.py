@@ -241,19 +241,18 @@ class MotionDetector(_h.Analog_input):
     def __init__(self, name, sampling_rate, reset, MT, event='motion'):
 
         threshold = 2000  # halfway between 0V and 3.3V
-        self.motionBuffer = bytearray([0x00, 0x00, 0x00, 0x00])  # uarray('L', 4)
+        self.motionBuffer = [bytearray(1), bytearray(1), bytearray(1), bytearray(1)]  
 
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset, MT=MT)
         _h.Analog_input.__init__(self, MT, name, int(sampling_rate), threshold, rising_event=None,
                                  falling_event=event, data_type='L')
 
     def read_sample(self):
-        # Read value of encoder counter, correct for rollover, return position or velocity.
         self.sensor.read_pos_buff(self.motionBuffer)
-        delta_x = int.from_bytes(self.motionBuffer[:2], 'big')
-        delta_y = int.from_bytes(self.motionBuffer[2:], 'big')
+        # delta_x = int.from_bytes(self.motionBuffer[:2], 'big')
+        # delta_y = int.from_bytes(self.motionBuffer[2:], 'big')
 
-        return delta_x + delta_y  # 4 bytes
+        return b''.join(self.motionBuffer)  # 4 bytes
 
     def _start_acquisition(self):
         # Start sampling analog input values.
