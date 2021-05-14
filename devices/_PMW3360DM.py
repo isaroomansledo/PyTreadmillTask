@@ -5,9 +5,9 @@ from devices.PMW3360DM_srom_0x04 import PROGMEM
 
 def twos_comp(val, bits=16):
     """compute the 2's complement of int value val"""
-    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
-        val = val - (1 << bits)        # compute negative value
-    return val                         # return positive value as is
+    if (val & (1 << (bits - 1))) != 0:  # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)         # compute negative value
+    return val                          # return positive value as is
 
 
 class PMW3360DM():
@@ -15,8 +15,8 @@ class PMW3360DM():
     def __init__(self,
                  SPI_type: str,
                  eventName: str,
-                 reset: str,
-                 MT: str,
+                 reset: str = None,
+                 MT: str = None,
                  CS: str = None,
                  MI: str = None,
                  MO: str = None,
@@ -41,11 +41,13 @@ class PMW3360DM():
                                        miso=machine.Pin(id=MI, mode=machine.Pin.IN))
             self.select = Digital_output(pin=CS, inverted=True)
 
-        self.motion = Digital_input(pin=self.MT, falling_event=eventName, pull='up')
-        self.reset = Digital_output(pin=reset, inverted=True)
+        if MT is not None:
+            self.motion = Digital_input(pin=self.MT, falling_event=eventName, pull='up')
+        if reset is not None:
+            self.reset = Digital_output(pin=reset, inverted=True)
+            self.reset.off()
 
         self.select.off()
-        self.reset.off()
 
     def read_pos(self):
         # write and read Motion register to lock the content of delta registers
@@ -242,7 +244,7 @@ class MotionDetector(Analog_input):
         threshold = 2000  # halfway between 0V and 3.3V
         self.motionBuffer = [bytearray(1), bytearray(1), bytearray(1), bytearray(1)]
 
-        self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset, MT=MT)
+        self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         Analog_input.__init__(self, MT, name, int(sampling_rate), threshold, rising_event=None,
                               falling_event=event, data_type='L')
 
