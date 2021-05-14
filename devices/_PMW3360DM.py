@@ -1,6 +1,5 @@
-import utime, machine, pyb
-from uarray import uarray
-import pyControl.hardware as _h
+import utime, machine
+from pyControl.hardware import Digital_output, Digital_input, Analog_input
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
 
@@ -22,28 +21,28 @@ class PMW3360DM():
                  MI: str = None,
                  MO: str = None,
                  SCK: str = None):
-        
+
         self.MT = MT
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
         SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 1,
                      'bits': 8, 'firstbit': machine.SPI.MSB}
         if '1' in SPI_type:
             self.SPI = machine.SPI(1, **SPIparams)
-            self.select = _h.Digital_output(pin='W7', inverted=True)
+            self.select = Digital_output(pin='W7', inverted=True)
 
         elif '2' in SPI_type:
             self.SPI = machine.SPI(2, **SPIparams)
-            self.select = _h.Digital_output(pin='W45', inverted=True)
+            self.select = Digital_output(pin='W45', inverted=True)
 
         elif 'soft' in SPI_type.lower():
             self.SPI = machine.SoftSPI(baudrate=500000, polarity=1, phase=0, bits=8, firstbit=machine.SPI.MSB,
                                        sck=machine.Pin(id=SCK, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
                                        mosi=machine.Pin(id=MO, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
                                        miso=machine.Pin(id=MI, mode=machine.Pin.IN))
-            self.select = _h.Digital_output(pin=CS, inverted=True)
+            self.select = Digital_output(pin=CS, inverted=True)
 
-        self.motion = _h.Digital_input(pin=self.MT, falling_event=eventName, pull='up')
-        self.reset = _h.Digital_output(pin=reset, inverted=True)
+        self.motion = Digital_input(pin=self.MT, falling_event=eventName, pull='up')
+        self.reset = Digital_output(pin=reset, inverted=True)
 
         self.select.off()
         self.reset.off()
@@ -236,16 +235,16 @@ class PMW3360DM():
         # delta_x_H[0] + delta_x_L[1] + delta_y_H[2] + delta_y_L[3]
 
 
-class MotionDetector(_h.Analog_input):
+class MotionDetector(Analog_input):
     # Quadrature output rotary encoder.
     def __init__(self, name, sampling_rate, reset, MT, event='motion'):
 
         threshold = 2000  # halfway between 0V and 3.3V
-        self.motionBuffer = [bytearray(1), bytearray(1), bytearray(1), bytearray(1)]  
+        self.motionBuffer = [bytearray(1), bytearray(1), bytearray(1), bytearray(1)]
 
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset, MT=MT)
-        _h.Analog_input.__init__(self, MT, name, int(sampling_rate), threshold, rising_event=None,
-                                 falling_event=event, data_type='L')
+        Analog_input.__init__(self, MT, name, int(sampling_rate), threshold, rising_event=None,
+                              falling_event=event, data_type='L')
 
     def read_sample(self):
         self.sensor.read_pos_buff(self.motionBuffer)
@@ -253,7 +252,3 @@ class MotionDetector(_h.Analog_input):
         # delta_y = int.from_bytes(self.motionBuffer[2:], 'big')
 
         return b''.join(self.motionBuffer)  # 4 bytes
-
-    def _start_acquisition(self):
-        # Start sampling analog input values.
-        _h.Analog_input._start_acquisition(self)
