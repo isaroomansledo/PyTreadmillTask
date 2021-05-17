@@ -32,7 +32,7 @@ def run_start():
     set_timer('session_timer', v.session_duration, True)
     hw.motionSensor.sensor.power_up()
     hw.motionSensor.record()
-    set_timer('motion', v.motion_timer___)
+    # set_timer('motion', v.motion_timer___)
 
 
 def run_end():
@@ -55,9 +55,9 @@ def all_states(event):
     # irrespective of the state the machine is in.
     if event == 'motion':
         # read the motion registers and and append the variables
-        delta_x, delta_y = hw.motionSensor.sensor.read_pos()
+        delta_x, delta_y = hw.motionSensor.sensor.delta_x, hw.motionSensor.sensor.delta_y
         print('{},{}, dM'.format(delta_x, delta_y))
-        set_timer('motion', v.motion_timer___)
+        # set_timer('motion', v.motion_timer___)
 
     elif event == 'session_timer':
         stop_framework()

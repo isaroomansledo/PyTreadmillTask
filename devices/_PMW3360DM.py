@@ -1,5 +1,5 @@
 import utime, machine
-from pyControl.hardware import Digital_output, Digital_input, Analog_input
+from pyControl.hardware import *
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
 
@@ -243,14 +243,35 @@ class MotionDetector(Analog_input):
 
         threshold = 2000  # halfway between 0V and 3.3V
         self.motionBuffer = [bytearray(1), bytearray(1), bytearray(1), bytearray(1)]
-
+        self.delta_x = 0
+        self.delta_y = 0
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         Analog_input.__init__(self, MT, name, int(sampling_rate), threshold, rising_event=None,
                               falling_event=event, data_type='L')
 
-    def read_sample(self):
+    def read_sensor(self):
         self.sensor.read_pos_buff(self.motionBuffer)
-        # delta_x = int.from_bytes(self.motionBuffer[:2], 'big')
-        # delta_y = int.from_bytes(self.motionBuffer[2:], 'big')
+        self.delta_x = int.from_bytes(self.motionBuffer[:2], 'big')
+        self.delta_y = int.from_bytes(self.motionBuffer[2:], 'big')
 
         return b''.join(self.motionBuffer)  # 4 bytes
+
+    def _timer_ISR(self, t):
+        # Read a sample to the buffer, update write index.
+        self.buffers[self.write_buffer][self.write_index] = self.read_sensor()
+        last_threshold = self.read_sample()
+        if self.threshold_active:
+            new_above_threshold = last_threshold > self.threshold
+            if new_above_threshold != self.above_threshold:  # Threshold crossing.
+                self.above_threshold = new_above_threshold
+                if ((self.above_threshold and self.rising_event_ID) or
+                   (not self.above_threshold and self.falling_event_ID)):
+                    self.timestamp = fw.current_time
+                    self.crossing_direction = self.above_threshold
+                    interrupt_queue.put(self.ID)
+        if self.recording:
+            self.write_index = (self.write_index + 1) % self.buffer_size
+            if self.write_index == 0:  # Buffer full, switch buffers.
+                self.write_buffer = 1 - self.write_buffer
+                self.buffer_start_times[self.write_buffer] = fw.current_time
+                stream_data_queue.put(self.ID)
