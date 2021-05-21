@@ -296,7 +296,7 @@ class MotionDetector(PMW3360DM):
     def record(self):
         # Start streaming data to computer.
         if not self.recording:
-            self.write_index = 0  # Buffer index to write new data to. 
+            self.write_index = 0  # Buffer index to write new data to.
             self.buffer_start_times[self.write_buffer] = fw.current_time
             self.recording = True
             if not self.acquiring:
