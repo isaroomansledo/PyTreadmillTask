@@ -14,7 +14,7 @@ class PMW3360DM():
     # mouse motion sensor.
     def __init__(self,
                  SPI_type: str,
-                 eventName: str,
+                 eventName: str = None,
                  reset: str = None,
                  MT: str = None,
                  CS: str = None,
