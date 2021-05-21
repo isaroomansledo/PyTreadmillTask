@@ -241,7 +241,7 @@ class PMW3360DM():
 class MotionDetector(PMW3360DM):
     # Directly copied from Analog_input()
     def __init__(self, name, reset, sampling_rate=5000, event='motion'):
-        PMW3360DM.__init__(self, SPI_type='SPI2', eventName='', reset=reset)
+        PMW3360DM.__init__(self, SPI_type='SPI2', reset=reset)
         self.name = name
         assign_ID(self)
         # Data acqisition variables
