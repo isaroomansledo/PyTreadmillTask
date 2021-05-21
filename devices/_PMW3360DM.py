@@ -1,4 +1,4 @@
-import utime, machine
+import utime, machine, pyb
 from pyControl.hardware import *
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
@@ -62,8 +62,8 @@ class PMW3360DM():
         delta_x = delta_x_H + delta_x_L
         delta_y = delta_y_H + delta_y_L
 
-        delta_x = int.from_bytes(delta_x, 'big')
-        delta_y = int.from_bytes(delta_y, 'big')
+        delta_x = int.from_bytes(delta_x, 'little')
+        delta_y = int.from_bytes(delta_y, 'little')
 
         delta_x = twos_comp(delta_x)
         delta_y = twos_comp(delta_y)
@@ -76,7 +76,7 @@ class PMW3360DM():
         """
         # ensure MSB=0
         addrs = addrs & 0x7f
-        addrs = addrs.to_bytes(1, 'big')
+        addrs = addrs.to_bytes(1, 'little')
         self.select.on()
         self.SPI.write(addrs)
         utime.sleep_us(100)  # tSRAD
@@ -92,8 +92,8 @@ class PMW3360DM():
         """
         # flip the MSB to 1:
         addrs = addrs | 0x80
-        addrs = addrs.to_bytes(1, 'big')
-        data = data.to_bytes(1, 'big')
+        addrs = addrs.to_bytes(1, 'little')
+        data = data.to_bytes(1, 'little')
         self.select.on()
         self.SPI.write(addrs)
         self.SPI.write(data)
@@ -130,7 +130,7 @@ class PMW3360DM():
         # 6
         self.download_srom(PROGMEM)
         # 7
-        ID = int.from_bytes(self.read_register(0x2a), 'big')
+        ID = int.from_bytes(self.read_register(0x2a), 'little')
         assert ID == 0x04, "bad SROM v={}".format(ID)
         # 8
         # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design (Enable/Disable Rest mode)
@@ -165,10 +165,10 @@ class PMW3360DM():
     def download_srom(self, srom):
         self.select.on()
         # flip the MSB to 1:
-        self.SPI.write((0x62 | 0x80) .to_bytes(1, 'big'))
+        self.SPI.write((0x62 | 0x80) .to_bytes(1, 'little'))
         utime.sleep_us(15)
         for srom_byte in srom:
-            self.SPI.write(srom_byte.to_bytes(1, 'big'))
+            self.SPI.write(srom_byte.to_bytes(1, 'little'))
             utime.sleep_us(15)
 
         self.select.off()
@@ -192,7 +192,7 @@ class PMW3360DM():
         # 2
         self.select.on()
         # 3
-        self.SPI.write(0x50 .to_bytes(1, 'big'))
+        self.SPI.write(0x50 .to_bytes(1, 'little'))
         # 4
         utime.sleep_us(35)  # wait for tSRAD_MOTBR
         # 5
@@ -215,7 +215,7 @@ class PMW3360DM():
         """
         # ensure MSB=0
         addrs = addrs & 0x7f
-        addrs = addrs.to_bytes(1, 'big')
+        addrs = addrs.to_bytes(1, 'little')
         self.select.on()
         self.SPI.write(addrs)
         utime.sleep_us(100)  # tSRAD
@@ -235,67 +235,51 @@ class PMW3360DM():
         self.read_register_buff(0x05, buff[3])
         self.read_register_buff(0x06, buff[2])
         # delta_x_H[0] + delta_x_L[1] + delta_y_H[2] + delta_y_L[3]
+        return buff
 
 
-class MotionDetector(IO_object):
-    # Directly copied from Analog_input(): MotionDetector(name, sampling_rate, reset, MT, event='motion')
-    # Analog_input samples analog voltage from specified pin at specified frequency and can
-    # stream data to continously to computer as well as generate framework events when 
-    # voltage goes above / below specified value. The Analog_input class is subclassed
-    # by other hardware devices that generate continous data such as the Rotory_encoder.
-    # Serial data format for sending data to computer: 'A c i r l t k D' where:
-    # A character indicating start of analog data chunk (1 byte)
-    # c data array typecode (1 byte)
-    # i ID of analog input  (2 byte)
-    # r sampling rate (Hz) (2 bytes)
-    # l length of data array in bytes (2 bytes)
-    # t timestamp of chunk start (ms)(4 bytes)
-    # k checksum (2 bytes)
-    # D data array bytes (variable)
-
-    def __init__(self, pin, name, sampling_rate, threshold=None, rising_event=None, 
-                 falling_event=None, data_type='H'):
-        if rising_event or falling_event:
-            assert type(threshold) == int, 'Integer threshold must be specified if rising or falling events are defined.'
-        assert data_type in ('b','B','h','H','l','L'), 'Invalid data_type.'
-        assert not any([name == io.name for io in IO_dict.values() 
-                        if isinstance(io, Analog_input)]), 'Analog inputs must have unique names.'
-        if pin: # pin argument can be None when Analog_input subclassed.
-            self.ADC = pyb.ADC(pin)
-            self.read_sample = self.ADC.read
+class MotionDetector(PMW3360DM):
+    # Directly copied from Analog_input()
+    def __init__(self, name, reset, sampling_rate=5000, event='motion'):
+        PMW3360DM.__init__(self, SPI_type='SPI2', eventName='', reset=reset)
         self.name = name
         assign_ID(self)
         # Data acqisition variables
         self.timer = pyb.Timer(available_timers.pop())
-        self.recording = False # Whether data is being sent to computer.
-        self.acquiring = False # Whether input is being monitored.
+        self.recording = False  # Whether data is being sent to computer.
+        self.acquiring = False  # Whether input is being monitored.
         self.sampling_rate = sampling_rate
-        self.data_type = data_type
-        self.bytes_per_sample = {'b':1,'B':1,'h':2,'H':2,'l':4,'L':4}[data_type]
-        self.buffer_size = max(4, min(256 // self.bytes_per_sample, sampling_rate//10))
-        self.buffers = (array(data_type, [0]*self.buffer_size),array(data_type, [0]*self.buffer_size))
+        self.data_type = 'L'
+        self.bytes_per_sample = {'b': 1, 'B': 1, 'h': 2, 'H': 2, 'l': 4, 'L': 4}[self.data_type]
+        self.buffer_size = max(4, min(256 // self.bytes_per_sample, sampling_rate // 10))
+        self.buffers = (array(self.data_type, [0] * self.buffer_size), array(self.data_type, [0] * self.buffer_size))
         self.buffers_mv = (memoryview(self.buffers[0]), memoryview(self.buffers[1]))
-        self.buffer_start_times = array('i', [0,0])
-        self.data_header = array('B', b'A' + data_type.encode() + 
-            self.ID.to_bytes(2,'little') + sampling_rate.to_bytes(2,'little') + b'\x00'*8)
+        self.buffer_start_times = array('i', [0, 0])
+        self.data_header = array('B', b'A' + data_type.encode() +
+                                 self.ID.to_bytes(2, 'little') + sampling_rate.to_bytes(2, 'little') + b'\x00' * 8)
+        # Motion sensor variables
+        self.motionBuffer = [bytearray(1), bytearray(1), bytearray(1), bytearray(1)]
+        self.delta_x = 0
+        self.delta_y = 0
+        self.power_up()
+        self.off = self.shut_down
         # Event generation variables
-        self.threshold = threshold
-        self.rising_event = rising_event
-        self.falling_event = falling_event
+        self.event = event
         self.timestamp = 0
-        self.crossing_direction = False
+
+    def read_sensor(self):
+        self.read_pos_buff(self.motionBuffer)
+        self.delta_x = int.from_bytes(self.motionBuffer[:2], 'little')
+        self.delta_y = int.from_bytes(self.motionBuffer[2:], 'little')
 
     def _initialise(self):
         # Set event codes for rising and falling events.
-        self.rising_event_ID  = fw.events[self.rising_event ] if self.rising_event  in fw.events else False
-        self.falling_event_ID = fw.events[self.falling_event] if self.falling_event in fw.events else False
-        self.threshold_active = self.rising_event_ID or self.falling_event_ID
+        self.event_ID = fw.events[self.event] if self.event in fw.events else False
 
     def _run_start(self):
-        self.write_buffer = 0 # Buffer to write new data to.
-        self.write_index  = 0 # Buffer index to write new data to. 
-        if self.threshold_active: 
-            self._start_acquisition()
+        self.write_buffer = 0  # Buffer to write new data to.
+        self.write_index = 0   # Buffer index to write new data to.
+        self._start_acquisition()
 
     def _run_stop(self):
         if self.recording:
@@ -307,8 +291,6 @@ class MotionDetector(IO_object):
         # Start sampling analog input values.
         self.timer.init(freq=self.sampling_rate)
         self.timer.callback(self._timer_ISR)
-        if self.threshold_active:
-            self.above_threshold = self.read_sample() > self.threshold
         self.acquiring = True
 
     def record(self):
@@ -317,7 +299,8 @@ class MotionDetector(IO_object):
             self.write_index = 0  # Buffer index to write new data to. 
             self.buffer_start_times[self.write_buffer] = fw.current_time
             self.recording = True
-            if not self.acquiring: self._start_acquisition()
+            if not self.acquiring:
+                self._start_acquisition()
 
     def stop(self):
         # Stop streaming data to computer.
@@ -325,8 +308,6 @@ class MotionDetector(IO_object):
             if self.write_index != 0:
                 self._send_buffer(self.write_buffer, self.write_index)
             self.recording = False
-            if not self.threshold_active: 
-                self._stop_acquisition()
 
     def _stop_acquisition(self):
         # Stop sampling analog input values.
@@ -335,44 +316,34 @@ class MotionDetector(IO_object):
 
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
-        self.buffers[self.write_buffer][self.write_index] = self.read_sample()
-        if self.threshold_active:
-            new_above_threshold = self.buffers[self.write_buffer][self.write_index] > self.threshold
-            if new_above_threshold != self.above_threshold: # Threshold crossing.
-                self.above_threshold = new_above_threshold
-                if ((    self.above_threshold and self.rising_event_ID) or 
-                    (not self.above_threshold and self.falling_event_ID)):
-                        self.timestamp = fw.current_time
-                        self.crossing_direction = self.above_threshold
-                        interrupt_queue.put(self.ID)
+        self.buffers[self.write_buffer][self.write_index] = self.read_sensor()
+        self.timestamp = fw.current_time
+        interrupt_queue.put(self.ID)
         if self.recording:
             self.write_index = (self.write_index + 1) % self.buffer_size
-            if self.write_index == 0: # Buffer full, switch buffers.
+            if self.write_index == 0:  # Buffer full, switch buffers.
                 self.write_buffer = 1 - self.write_buffer
                 self.buffer_start_times[self.write_buffer] = fw.current_time
                 stream_data_queue.put(self.ID)
 
     def _process_interrupt(self):
         # Put event generated by threshold crossing in event queue.
-        if self.crossing_direction:
-            fw.event_queue.put((self.timestamp, fw.event_typ, self.rising_event_ID))
-        else:
-            fw.event_queue.put((self.timestamp, fw.event_typ, self.falling_event_ID))
+        fw.event_queue.put((self.timestamp, fw.event_typ, self.event))
 
     def _process_streaming(self):
         # Stream full buffer to computer.
-        self._send_buffer(1-self.write_buffer)
+        self._send_buffer(1 - self.write_buffer)
 
     def _send_buffer(self, buffer_n, n_samples=False):
         # Send specified buffer to host computer.
-        n_bytes = self.bytes_per_sample*n_samples if n_samples else self.bytes_per_sample*self.buffer_size
-        self.data_header[6:8]  = n_bytes.to_bytes(2,'little')
-        self.data_header[8:12] = self.buffer_start_times[buffer_n].to_bytes(4,'little')
+        n_bytes = self.bytes_per_sample * n_samples if n_samples else self.bytes_per_sample * self.buffer_size
+        self.data_header[6:8] = n_bytes.to_bytes(2, 'little')
+        self.data_header[8:12] = self.buffer_start_times[buffer_n].to_bytes(4, 'little')
         checksum = sum(self.buffers_mv[buffer_n][:n_samples] if n_samples else self.buffers[buffer_n])
         checksum += sum(self.data_header[1:12])
-        self.data_header[12:14] = checksum.to_bytes(2,'little')
+        self.data_header[12:14] = checksum.to_bytes(2, 'little')
         fw.usb_serial.write(self.data_header)
-        if n_samples: # Send first n_samples from buffer.
+        if n_samples:  # Send first n_samples from buffer.
             fw.usb_serial.send(self.buffers_mv[buffer_n][:n_samples])
-        else: # Send entire buffer.
+        else:  # Send entire buffer.
             fw.usb_serial.send(self.buffers[buffer_n])
