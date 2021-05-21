@@ -22,7 +22,7 @@ initial_state = 'intertrial'
 # -------------------------------------------------------------------------
 
 # session params
-v.session_duration = 1 * hour
+v.session_duration = 10 * second
 v.motion_timer___ = 1 * ms  # polls motion every 1ms
 
 
@@ -37,7 +37,6 @@ def run_start():
 def run_end():
     # Code here is executed when the framework stops running.
     # Turn off all hardware outputs.
-    hw.motionSensor.sensor.shut_down()
     hw.motionSensor.stop()
     hw.off()
 
