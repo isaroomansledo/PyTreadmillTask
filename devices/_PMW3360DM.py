@@ -255,7 +255,7 @@ class MotionDetector(PMW3360DM):
         self.buffers = (array(self.data_type, [0] * self.buffer_size), array(self.data_type, [0] * self.buffer_size))
         self.buffers_mv = (memoryview(self.buffers[0]), memoryview(self.buffers[1]))
         self.buffer_start_times = array('i', [0, 0])
-        self.data_header = array('B', b'A' + data_type.encode() +
+        self.data_header = array('B', b'A' + self.data_type.encode() +
                                  self.ID.to_bytes(2, 'little') + sampling_rate.to_bytes(2, 'little') + b'\x00' * 8)
         # Motion sensor variables
         self.motionBuffer = [bytearray(1), bytearray(1), bytearray(1), bytearray(1)]
