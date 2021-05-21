@@ -271,6 +271,7 @@ class MotionDetector(PMW3360DM):
         self.read_pos_buff(self.motionBuffer)
         self.delta_x = int.from_bytes(self.motionBuffer[:2], 'little')
         self.delta_y = int.from_bytes(self.motionBuffer[2:], 'little')
+        return self.motionBuffer
 
     def _initialise(self):
         # Set event codes for rising and falling events.
