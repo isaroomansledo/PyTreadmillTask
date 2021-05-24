@@ -272,9 +272,9 @@ class MotionDetector(PMW3360DM):
         self.delta_y_H_mv = memoryview(self.motionBuffer[2:3])
         self.delta_x_mv = memoryview(self.motionBuffer[0:2])
         self.delta_y_mv = memoryview(self.motionBuffer[2:])
-        self.delta = array('i',[0, 0])  #  delta[0]=x, delta[1]=y 
+        self.delta = array('i', [0, 0])  # delta[0]=x, delta[1]=y
         self.power_up()
-        self.off = self.shut_down
+        self.off = self.shut_down  # to make up for not inheriting from IO_object
         # Event generation variables
         self.event = event
         self.timestamp = 0
@@ -320,7 +320,7 @@ class MotionDetector(PMW3360DM):
         # Stop sampling analog input values.
         self.timer.deinit()
         self.acquiring = False
-    
+
     def read_sensor(self):
         self.write_register_buff(b'\x02', b'\x81')
         self.read_register_buff(b'\x02', self.delta_x_L_mv)
