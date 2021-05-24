@@ -146,6 +146,7 @@ class PMW3360DM():
 
         utime.sleep_ms(10)
 
+
     def shut_down(self):
         """
         Perform the shut down sequence
@@ -161,6 +162,8 @@ class PMW3360DM():
         utime.sleep_ms(1)
         self.select.off()
         utime.sleep_ms(1)
+
+        self.SPI.deinit()
 
     def download_srom(self, srom):
         self.select.on()
@@ -337,7 +340,7 @@ class MotionDetector(PMW3360DM):
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
         self.read_sensor()
-        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer,'little')    
+        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer, 'little')
         self.timestamp = fw.current_time
         interrupt_queue.put(self.ID)
         if self.recording:
