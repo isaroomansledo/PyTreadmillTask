@@ -266,10 +266,12 @@ class MotionDetector(PMW3360DM):
                                  self.ID.to_bytes(2, 'little') + sampling_rate.to_bytes(2, 'little') + b'\x00' * 8)
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
-        self.delta_x_L_mv = memoryview(self.motionBuffer[0:1])
-        self.delta_x_H_mv = memoryview(self.motionBuffer[1:2])
-        self.delta_y_L_mv = memoryview(self.motionBuffer[2:3])
-        self.delta_y_H_mv = memoryview(self.motionBuffer[3:])
+        self.delta_x_L_mv = memoryview(self.motionBuffer[1:2])
+        self.delta_x_H_mv = memoryview(self.motionBuffer[0:1])
+        self.delta_y_L_mv = memoryview(self.motionBuffer[3:])
+        self.delta_y_H_mv = memoryview(self.motionBuffer[2:3])
+        self.delta_x_mv = memoryview(self.motionBuffer[0:2])
+        self.delta_y_mv = memoryview(self.motionBuffer[2:])
         self.delta = array('i',[0, 0])  #  delta[0]=x, delta[1]=y 
         self.power_up()
         self.off = self.shut_down
@@ -328,8 +330,8 @@ class MotionDetector(PMW3360DM):
         self.read_register_buff(b'\x05', self.delta_y_L_mv)
         self.read_register_buff(b'\x06', self.delta_y_H_mv)
 
-        self.delta[1] = int.from_bytes(self.delta_y_L_mv, 'little')
-        self.delta[0] = int.from_bytes(self.delta_x_L_mv, 'little')
+        self.delta[1] = twos_comp(int.from_bytes(self.delta_y_mv, 'little'))
+        self.delta[0] = twos_comp(int.from_bytes(self.delta_x_mv, 'little'))
 
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
