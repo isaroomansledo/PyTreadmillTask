@@ -266,12 +266,13 @@ class MotionDetector(PMW3360DM):
                                  self.ID.to_bytes(2, 'little') + sampling_rate.to_bytes(2, 'little') + b'\x00' * 8)
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
-        self.delta_x_L_mv = memoryview(self.motionBuffer[1:2])
-        self.delta_x_H_mv = memoryview(self.motionBuffer[0:1])
-        self.delta_y_L_mv = memoryview(self.motionBuffer[3:])
-        self.delta_y_H_mv = memoryview(self.motionBuffer[2:3])
-        self.delta_x_mv = memoryview(self.motionBuffer[0:2])
-        self.delta_y_mv = memoryview(self.motionBuffer[2:])
+        self.motionBuffer_mv = memoryview(self.motionBuffer)
+        self.delta_x_L_mv = self.motionBuffer_mv[1:2]
+        self.delta_x_H_mv = self.motionBuffer_mv[0:1]
+        self.delta_y_L_mv = self.motionBuffer_mv[3:]
+        self.delta_y_H_mv = self.motionBuffer_mv[2:3]
+        self.delta_x_mv = self.motionBuffer_mv[0:2]
+        self.delta_y_mv = self.motionBuffer_mv[2:]
         self.delta = array('i', [0, 0])  # delta[0]=x, delta[1]=y
         self.power_up()
         self.off = self.shut_down  # to make up for not inheriting from IO_object
