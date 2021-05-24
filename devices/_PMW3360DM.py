@@ -146,7 +146,6 @@ class PMW3360DM():
 
         utime.sleep_ms(10)
 
-
     def shut_down(self):
         """
         Perform the shut down sequence
