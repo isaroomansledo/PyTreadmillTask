@@ -53,7 +53,7 @@ def all_states(event):
     # irrespective of the state the machine is in.
     if event == 'motion':
         # read the motion registers and and append the variables
-        print('{}, dM'.format(bytes(hw.motionSensor.deltaData_mv)))
+        print('{}, dM'.format(bytes(hw.motionSensor.delta)))
         # set_timer('motion', v.motion_timer___)
 
     elif event == 'session_timer':
