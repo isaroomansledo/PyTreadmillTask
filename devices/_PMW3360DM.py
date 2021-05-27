@@ -62,8 +62,8 @@ class PMW3360DM():
         delta_x = delta_x_H + delta_x_L
         delta_y = delta_y_H + delta_y_L
 
-        delta_x = int.from_bytes(delta_x, 'little')
-        delta_y = int.from_bytes(delta_y, 'little')
+        delta_x = int.from_bytes(delta_x, 'big')
+        delta_y = int.from_bytes(delta_y, 'big')
 
         delta_x = twos_comp(delta_x)
         delta_y = twos_comp(delta_y)
@@ -211,17 +211,20 @@ class PMW3360DM():
 
         return delta_x, delta_y
 
-    def read_register_buff(self, addrs: bytes, buff: bytes):
-        """
-        addrs < 128
-        """
+    def burst_read_buff(self, buff):
+        # 1
+        self.write_register_buff(b'\x50', b'\x00')
+        # 2
         self.select.on()
-        self.SPI.write(addrs)
-        utime.sleep_us(100)  # tSRAD
+        # 3
+        self.SPI.write(b'\x50')
+        # 4
+        utime.sleep_us(35)  # wait for tSRAD_MOTBR
+        # 5
         self.SPI.readinto(buff)
-        utime.sleep_us(1)  # tSCLK-NCS for read operation is 120ns
+        # 6
         self.select.off()
-        utime.sleep_us(19)  # tSRW/tSRR (=20us) minus tSCLK-NCS
+        utime.sleep_us(2)
 
     def write_register_buff(self, addrs: bytes, data: bytes):
         """
@@ -234,17 +237,6 @@ class PMW3360DM():
         utime.sleep_us(20)  # tSCLK-NCS for write operation
         self.select.off()
         utime.sleep_us(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound
-
-    def read_pos_buff(self, buff):
-        # write and read Motion register to lock the content of delta registers
-        self.write_register_buff(b'\x02', b'\x81')
-        self.read_register_buff(b'\x02', buff[0:1])
-
-        self.read_register_buff(b'\x03', buff[1:2])
-        self.read_register_buff(b'\x04', buff[0:1])
-        self.read_register_buff(b'\x05', buff[3:])
-        self.read_register_buff(b'\x06', buff[2:3])
-        # delta_x_H[0] + delta_x_L[1] + delta_y_H[2] + delta_y_L[3]
 
 
 class MotionDetector(PMW3360DM):
@@ -267,14 +259,9 @@ class MotionDetector(PMW3360DM):
         self.data_header = array('B', b'A' + self.data_type.encode() +
                                  self.ID.to_bytes(2, 'little') + sampling_rate.to_bytes(2, 'little') + b'\x00' * 8)
         # Motion sensor variables
-        self.motionBuffer = bytearray(4)
+        self.motionBuffer = bytearray(6)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
-        self.delta_x_L_mv = self.motionBuffer_mv[1:2]
-        self.delta_x_H_mv = self.motionBuffer_mv[0:1]
-        self.delta_y_L_mv = self.motionBuffer_mv[3:]
-        self.delta_y_H_mv = self.motionBuffer_mv[2:3]
-        self.delta_x_mv = self.motionBuffer_mv[0:2]
-        self.delta_y_mv = self.motionBuffer_mv[2:]
+        self.deltaData_mv = self.motionBuffer_mv[2:]
         self.delta = array('i', [0, 0])  # delta[0]=x, delta[1]=y
         self.power_up()
         self.off = self.shut_down  # to make up for not inheriting from IO_object
@@ -324,22 +311,10 @@ class MotionDetector(PMW3360DM):
         self.timer.deinit()
         self.acquiring = False
 
-    def read_sensor(self):
-        self.write_register_buff(b'\x02', b'\x81')
-        self.read_register_buff(b'\x02', self.delta_x_L_mv)
-
-        self.read_register_buff(b'\x03', self.delta_x_L_mv)
-        self.read_register_buff(b'\x04', self.delta_x_H_mv)
-        self.read_register_buff(b'\x05', self.delta_y_L_mv)
-        self.read_register_buff(b'\x06', self.delta_y_H_mv)
-
-        self.delta[1] = twos_comp(int.from_bytes(self.delta_y_mv, 'little'))
-        self.delta[0] = twos_comp(int.from_bytes(self.delta_x_mv, 'little'))
-
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
-        self.read_sensor()
-        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer, 'little')
+        self.burst_read_buff(self.motionBuffer)
+        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer_mv, 'little')  # LSB transferred first
         self.timestamp = fw.current_time
         interrupt_queue.put(self.ID)
         if self.recording:
