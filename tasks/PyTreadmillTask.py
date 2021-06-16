@@ -24,33 +24,13 @@ initial_state = 'intertrial'
 # session params
 v.session_duration = 10 * second
 v.motion_timer___ = 1 * ms  # polls motion every 1ms
-v.motionBuffer = bytearray(4)
-v.motionBuffer_mv = memoryview(v.motionBuffer)
-v.delta_x_L_mv = v.motionBuffer_mv[1:2]
-v.delta_x_H_mv = v.motionBuffer_mv[0:1]
-v.delta_y_L_mv = v.motionBuffer_mv[3:]
-v.delta_y_H_mv = v.motionBuffer_mv[2:3]
-v.delta_x_mv = v.motionBuffer_mv[0:2]
-v.delta_y_mv = v.motionBuffer_mv[2:]
-
-
-
-def read_sensor(sensor):
-    sensor.write_register_buff(b'\x02', b'\x81')
-    sensor.read_register_buff(b'\x02', v.delta_x_L_mv)
-
-    sensor.read_register_buff(b'\x03', v.delta_x_L_mv)
-    sensor.read_register_buff(b'\x04', v.delta_x_H_mv)
-    sensor.read_register_buff(b'\x05', v.delta_y_L_mv)
-    sensor.read_register_buff(b'\x06', v.delta_y_H_mv)
-
 
 
 # Run start and stop behaviour.
 def run_start():
     # Code here is executed when the framework starts running.
     set_timer('session_timer', v.session_duration, True)
-    hw.motionSensor.power_up()
+    hw.motionSensor.record()
     # set_timer('motion', v.motion_timer___)
 
 
