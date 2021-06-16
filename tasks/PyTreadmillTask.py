@@ -51,13 +51,13 @@ def run_start():
     # Code here is executed when the framework starts running.
     set_timer('session_timer', v.session_duration, True)
     hw.motionSensor.power_up()
-    set_timer('motion', v.motion_timer___)
+    # set_timer('motion', v.motion_timer___)
 
 
 def run_end():
     # Code here is executed when the framework stops running.
     # Turn off all hardware outputs.
-    hw.motionSensor.stop()
+    # hw.motionSensor.stop()
     hw.off()
 
 
@@ -73,9 +73,9 @@ def all_states(event):
     # irrespective of the state the machine is in.
     if event == 'motion':
         # read the motion registers and and append the variables
-        read_sensor(hw.motionSensor)
-        print('{}, dM'.format(int.from_bytes(v.motionBuffer, 'little')))
-        set_timer('motion', v.motion_timer___)
+        # read_sensor(hw.motionSensor)
+        print('{}, dM'.format(hw.motionSensor.delta))
+        # set_timer('motion', v.motion_timer___)
 
     elif event == 'session_timer':
         stop_framework()
