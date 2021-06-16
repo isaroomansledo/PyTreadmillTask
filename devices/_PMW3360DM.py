@@ -237,14 +237,13 @@ class PMW3360DM():
 
     def read_pos_buff(self, buff):
         # write and read Motion register to lock the content of delta registers
-        self.write_register_buff(b'\x02', b'\x81')
+        self.write_register_buff(b'\x82', b'\x01')
         self.read_register_buff(b'\x02', buff[0:1])
 
         self.read_register_buff(b'\x03', buff[1:2])
         self.read_register_buff(b'\x04', buff[0:1])
         self.read_register_buff(b'\x05', buff[3:])
         self.read_register_buff(b'\x06', buff[2:3])
-        # delta_x_H[0] + delta_x_L[1] + delta_y_H[2] + delta_y_L[3]
 
 
 class MotionDetector(PMW3360DM):
@@ -325,7 +324,7 @@ class MotionDetector(PMW3360DM):
         self.acquiring = False
 
     def read_sensor(self):
-        self.write_register_buff(b'\x02', b'\x81')
+        self.write_register_buff(b'\x82', b'\x01')
         self.read_register_buff(b'\x02', self.delta_x_L_mv)
 
         self.read_register_buff(b'\x03', self.delta_x_L_mv)
