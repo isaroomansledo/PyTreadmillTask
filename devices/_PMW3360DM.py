@@ -369,3 +369,29 @@ class MotionDetector(PMW3360DM):
             fw.usb_serial.send(self.buffers_mv[buffer_n][:n_samples])
         else:  # Send entire buffer.
             fw.usb_serial.send(self.buffers[buffer_n])
+
+class MotionDetector(Analog_input):
+    # Quadrature output rotary encoder.
+    def __init__(self, name, sampling_rate, reset, MT, event='motion'):
+        Analog_input.__init__(self, MT, name, int(sampling_rate), threshold, rising_event=None,
+                              falling_event=event, data_type='L')
+        threshold = 2000  # halfway between 0V and 3.3V
+        self.motionBuffer = [bytearray(1), bytearray(1), bytearray(1), bytearray(1)]
+        self.delta_x = 0
+        self.delta_y = 0
+        self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
+        # Motion sensor variables
+        self.motionBuffer = bytearray(4)
+        self.motionBuffer_mv = memoryview(self.motionBuffer)
+        self.delta_x_mv = self.motionBuffer_mv[0:2]
+        self.delta_y_mv = self.motionBuffer_mv[2:]
+        self.delta_x, self.delta_y = 0, 0
+
+    def reset_delta(self):
+        self.delta_x, self.delta_y = 0, 0
+
+    def read_sample(self):
+        self.sensor.read_pos_buff(self.motionBuffer_mv)
+
+        self.delta_y += twos_comp(int.from_bytes(self.delta_y_mv, 'big'))
+        self.delta_x += twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
