@@ -269,3 +269,5 @@ class MotionDetector(Analog_input):
 
         self.delta_y += twos_comp(int.from_bytes(self.delta_y_mv, 'big'))
         self.delta_x += twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
+
+        return self.motionBuffer
