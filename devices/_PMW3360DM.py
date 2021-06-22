@@ -332,13 +332,13 @@ class MotionDetector(PMW3360DM):
         self.read_register_buff(b'\x05', self.delta_y_L_mv)
         self.read_register_buff(b'\x06', self.delta_y_H_mv)
 
-        self.delta[1] = twos_comp(int.from_bytes(self.delta_y_mv, 'little'))
-        self.delta[0] = twos_comp(int.from_bytes(self.delta_x_mv, 'little'))
+        self.delta[1] = twos_comp(int.from_bytes(self.delta_y_mv, 'big'))
+        self.delta[0] = twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
 
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
         self.read_sensor()
-        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer, 'little')
+        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer, 'big')
         self.timestamp = fw.current_time
         interrupt_queue.put(self.ID)
         if self.recording:
