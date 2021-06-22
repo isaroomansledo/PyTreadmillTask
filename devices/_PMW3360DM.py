@@ -274,7 +274,7 @@ class MotionDetector(PMW3360DM):
         self.delta_y_H_mv = self.motionBuffer_mv[2:3]
         self.delta_x_mv = self.motionBuffer_mv[0:2]
         self.delta_y_mv = self.motionBuffer_mv[2:]
-        self.delta = array('i', [0, 0])  # delta[0]=x, delta[1]=y
+        self.delta_x, self.delta_y = array('i'), array('i')
         self.power_up()
         self.off = self.shut_down  # to make up for not inheriting from IO_object
         # Event generation variables
@@ -332,8 +332,8 @@ class MotionDetector(PMW3360DM):
         self.read_register_buff(b'\x05', self.delta_y_L_mv)
         self.read_register_buff(b'\x06', self.delta_y_H_mv)
 
-        self.delta[1] = twos_comp(int.from_bytes(self.delta_y_mv, 'big'))
-        self.delta[0] = twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
+        self.delta_y = twos_comp(int.from_bytes(self.delta_y_mv, 'big'))
+        self.delta_x = twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
 
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
