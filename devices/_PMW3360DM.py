@@ -141,7 +141,7 @@ class PMW3360DM():
         self.write_register(0x0f, 0x31)  # CPI setting=5000
         # set lift detection
         self.write_register(0x63, 0x03)  # Lift detection: +3mm
-        self.CPI = int.from_bytes(self.read_register(0x0f), 'little') * 100 + 100
+        self.CPI = int.from_bytes(self.read_register(0x0f), 'little')*100+100
 
         self.select.off()
 
@@ -294,10 +294,10 @@ class MotionDetector(Analog_input):
         # Read a sample to the buffer, update write index.
         self.buffers[self.write_buffer][self.write_index] = self.read_sample()
         if self.threshold_active:
-            if self.delta_x**2 + self.delta_y**2 >= self._threshold:
-                self.reset_delta()
-                self.timestamp = fw.current_time
-                interrupt_queue.put(self.ID)
+            #if self.delta_x**2 + self.delta_y**2 >= self._threshold:
+            self.reset_delta()
+            self.timestamp = fw.current_time
+            interrupt_queue.put(self.ID)
         if self.recording:
             self.write_index = (self.write_index + 1) % self.buffer_size
             if self.write_index == 0:  # Buffer full, switch buffers.
