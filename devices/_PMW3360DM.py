@@ -141,6 +141,7 @@ class PMW3360DM():
         self.write_register(0x0f, 0x31)  # CPI setting=5000
         # set lift detection
         self.write_register(0x63, 0x03)  # Lift detection: +3mm
+        self.CPI = int.from_bytes(self.read_register(0x0f), 'little')
 
         self.select.off()
 
@@ -250,6 +251,9 @@ class MotionDetector(Analog_input):
     # Quadrature output rotary encoder.
     def __init__(self, name, sampling_rate, reset, event='motion'):
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
+        self.sensor.power_up()
+        self.off = self.sensor.shut_down
+        self.CPI = int.from_bytes(self.sensor.read_register(0x0f), 'little')
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
