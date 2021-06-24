@@ -1,4 +1,4 @@
-import utime, machine, pyb
+import utime, machine, math
 from pyControl.hardware import *
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
@@ -252,7 +252,8 @@ class MotionDetector(Analog_input):
     def __init__(self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
         """
         name: name of the analog signal which will be streamed to the PC
-        threshold: in centimeters, distance travelled longer than THRESHOLD triggers an event
+        threshold: in centimeters, distance travelled longer than THRESHOLD triggers an event,
+        under the hood, THRESHOLD is saved as the square of the movement counts.
         """
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor.power_up()
@@ -270,11 +271,12 @@ class MotionDetector(Analog_input):
     @property
     def threshold(self):
         "return the value in cms"
-        return self._threshold / self.sensor.CPI * 2.54
+        return math.sqrt(self._threshold) / self.sensor.CPI * 2.54
 
     @threshold.setter
     def threshold(self, new_threshold):
-        self._threshold = new_threshold / 2.54 * self.sensor.CPI
+        self._threshold = (new_threshold / 2.54 * self.sensor.CPI)**2
+        self.reset_delta()
 
     def reset_delta(self):
         "reset the accumulated position data"
@@ -292,8 +294,9 @@ class MotionDetector(Analog_input):
         # Read a sample to the buffer, update write index.
         self.buffers[self.write_buffer][self.write_index] = self.read_sample()
         if self.threshold_active:
-            self.timestamp = fw.current_time
-            interrupt_queue.put(self.ID)
+            if self.delta_x**2 + self.delta_y**2 >= self._threshold:
+                self.timestamp = fw.current_time
+                interrupt_queue.put(self.ID)
         if self.recording:
             self.write_index = (self.write_index + 1) % self.buffer_size
             if self.write_index == 0:  # Buffer full, switch buffers.
