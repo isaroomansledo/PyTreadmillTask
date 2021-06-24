@@ -11,4 +11,4 @@ board = Breakout_dseries_1_6()
 # motionSensor = PMW3360DM(SPI_type='SPI2', eventName='',
 #                          reset=board.port_3.DIO_B, MT=board.port_3.DIO_C)
 
-motionSensor = MotionDetector(name='test', sampling_rate=500, reset=board.port_3.DIO_B, event='motion')
+motionSensor = MotionDetector(name='test', reset=board.port_3.DIO_B, threshold=10, sampling_rate=500, event='motion')
