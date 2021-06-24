@@ -141,7 +141,7 @@ class PMW3360DM():
         self.write_register(0x0f, 0x31)  # CPI setting=5000
         # set lift detection
         self.write_register(0x63, 0x03)  # Lift detection: +3mm
-        self.CPI = int.from_bytes(self.read_register(0x0f), 'little') * 100 + 100
+        self.CPI = int.from_bytes(self.read_register(0x0f), 'little')*100+100
 
         self.select.off()
 
@@ -261,10 +261,14 @@ class MotionDetector(Analog_input):
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
-        self.delta_x_mv = self.motionBuffer_mv[0:2]
-        self.delta_y_mv = self.motionBuffer_mv[2:]
+        self.delta_x_L_mv = self.motionBuffer_mv[1:2]
+        self.delta_x_H_mv = self.motionBuffer_mv[0:1]
+        self.delta_y_L_mv = self.motionBuffer_mv[3:]
+        self.delta_y_H_mv = self.motionBuffer_mv[2:3]
+        self.delta_x_mv   = self.motionBuffer_mv[0:2]
+        self.delta_y_mv   = self.motionBuffer_mv[2:]
         self.delta_x, self.delta_y = 0, 0
-        Analog_input.__init__(self, pin=None, name=name, sampling_rate=sampling_rate,
+        Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=event, falling_event=None, data_type='l')
         self.crossing_direction = True  # to conform to the Analog_input syntax
 
@@ -283,21 +287,27 @@ class MotionDetector(Analog_input):
         self.delta_x, self.delta_y = 0, 0
 
     def read_sample(self):
-        self.sensor.read_pos_buff(self.motionBuffer_mv)
+        self.write_register_buff(b'\x82', b'\x01')
+        self.read_register_buff(b'\x02', self.delta_x_H_mv)
 
-        self.delta_y += twos_comp(int.from_bytes(self.delta_y_mv, 'big'))
-        self.delta_x += twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
+        self.read_register_buff(b'\x03', self.delta_x_L_mv)
+        self.read_register_buff(b'\x04', self.delta_x_H_mv)
+        self.read_register_buff(b'\x05', self.delta_y_L_mv)
+        self.read_register_buff(b'\x06', self.delta_y_H_mv)
 
-        return self.motionBuffer
+        #self.delta_y += twos_comp(int.from_bytes(self.delta_y_mv, 'big'))
+        #self.delta_x += twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
+
+        return int.from_bytes(self.motionBuffer, 'big')
 
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
         self.buffers[self.write_buffer][self.write_index] = self.read_sample()
         if self.threshold_active:
-            if self.delta_x**2 + self.delta_y**2 >= self._threshold:
-                self.reset_delta()
-                self.timestamp = fw.current_time
-                interrupt_queue.put(self.ID)
+            #if self.delta_x**2 + self.delta_y**2 >= self._threshold:
+            self.reset_delta()
+            self.timestamp = fw.current_time
+            interrupt_queue.put(self.ID)
         if self.recording:
             self.write_index = (self.write_index + 1) % self.buffer_size
             if self.write_index == 0:  # Buffer full, switch buffers.
