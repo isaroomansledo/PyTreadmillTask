@@ -262,8 +262,6 @@ class MotionDetector(Analog_input):
         self.delta_x_mv = self.motionBuffer_mv[0:2]
         self.delta_y_mv = self.motionBuffer_mv[2:]
         self.delta_x, self.delta_y = 0, 0
-        # threshold: an event is generated when there is threshold crossing
-        #######self.threshold = 2000  # halfway between 0V and 3.3V
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=sampling_rate,
                               threshold=threshold, rising_event=event, falling_event=None, data_type='l')
 
@@ -311,3 +309,9 @@ class MotionDetector(Analog_input):
         self.timer.deinit()
         self.sensor.shut_down()
         self.acquiring = False
+
+    def _start_acquisition(self):
+        # Start sampling analog input values.
+        self.timer.init(freq=self.sampling_rate)
+        self.timer.callback(self._timer_ISR)
+        self.acquiring = True
