@@ -252,8 +252,6 @@ class MotionDetector(Analog_input):
     def __init__(self, name, sampling_rate, reset, event='motion'):
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor.power_up()
-        self.off = self.sensor.shut_down
-        self.CPI = int.from_bytes(self.sensor.read_register(0x0f), 'little')
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
@@ -294,3 +292,9 @@ class MotionDetector(Analog_input):
                 self.write_buffer = 1 - self.write_buffer
                 self.buffer_start_times[self.write_buffer] = fw.current_time
                 stream_data_queue.put(self.ID)
+
+    def _stop_acquisition(self):
+        # Stop sampling analog input values.
+        self.timer.deinit()
+        self.sensor.shut_down()
+        self.acquiring = False
