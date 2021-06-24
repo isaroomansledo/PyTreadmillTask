@@ -141,7 +141,7 @@ class PMW3360DM():
         self.write_register(0x0f, 0x31)  # CPI setting=5000
         # set lift detection
         self.write_register(0x63, 0x03)  # Lift detection: +3mm
-        self.CPI = int.from_bytes(self.read_register(0x0f), 'little')
+        self.CPI = int.from_bytes(self.read_register(0x0f), 'little') * 100 + 100
 
         self.select.off()
 
