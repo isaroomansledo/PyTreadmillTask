@@ -250,8 +250,12 @@ class PMW3360DM():
 class MotionDetector(Analog_input):
     # Quadrature output rotary encoder.
     def __init__(self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
+        """
+        threshold: in centimeters
+        """
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor.power_up()
+        self._threshold = (threshold / 2.54) * self.sensor.CPI
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
@@ -262,6 +266,15 @@ class MotionDetector(Analog_input):
         #######self.threshold = 2000  # halfway between 0V and 3.3V
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=sampling_rate,
                               threshold=threshold, rising_event=event, falling_event=None, data_type='l')
+
+    @property
+    def threshold(self):
+        "return the value in cms"
+        return self._threshold / self.sensor.CPI * 2.54
+
+    @threshold.setter
+    def threshold(self, new_threshold):
+        self._threshold = new_threshold / 2.54 * self.sensor.CPI
 
     def reset_delta(self):
         self.delta_x, self.delta_y = 0, 0
