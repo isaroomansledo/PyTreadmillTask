@@ -249,7 +249,7 @@ class PMW3360DM():
 
 class MotionDetector(Analog_input):
     # Quadrature output rotary encoder.
-    def __init__(self, name, sampling_rate, reset, event='motion'):
+    def __init__(self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor.power_up()
         # Motion sensor variables
