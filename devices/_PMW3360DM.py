@@ -251,7 +251,8 @@ class MotionDetector(Analog_input):
     # Quadrature output rotary encoder.
     def __init__(self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
         """
-        threshold: in centimeters
+        name: name of the analog signal which will be streamed to the PC
+        threshold: in centimeters, distance travelled longer than THRESHOLD triggers an event
         """
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor.power_up()
@@ -264,6 +265,7 @@ class MotionDetector(Analog_input):
         self.delta_x, self.delta_y = 0, 0
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=sampling_rate,
                               threshold=0, rising_event=event, falling_event=None, data_type='l')
+        self.crossing_direction = True  # to conform to the Analog_input syntax
 
     @property
     def threshold(self):
@@ -275,6 +277,7 @@ class MotionDetector(Analog_input):
         self._threshold = new_threshold / 2.54 * self.sensor.CPI
 
     def reset_delta(self):
+        "reset the accumulated position data"
         self.delta_x, self.delta_y = 0, 0
 
     def read_sample(self):
@@ -289,14 +292,8 @@ class MotionDetector(Analog_input):
         # Read a sample to the buffer, update write index.
         self.buffers[self.write_buffer][self.write_index] = self.read_sample()
         if self.threshold_active:
-            new_above_threshold = self.buffers[self.write_buffer][self.write_index] > self.threshold
-            if new_above_threshold != self.above_threshold: # Threshold crossing.
-                self.above_threshold = new_above_threshold
-                if ((    self.above_threshold and self.rising_event_ID) or 
-                    (not self.above_threshold and self.falling_event_ID)):
-                        self.timestamp = fw.current_time
-                        self.crossing_direction = self.above_threshold
-                        interrupt_queue.put(self.ID)
+            self.timestamp = fw.current_time
+            interrupt_queue.put(self.ID)
         if self.recording:
             self.write_index = (self.write_index + 1) % self.buffer_size
             if self.write_index == 0:  # Buffer full, switch buffers.
