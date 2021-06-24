@@ -265,7 +265,7 @@ class MotionDetector(Analog_input):
         self.delta_y_mv = self.motionBuffer_mv[2:]
         self.delta_x, self.delta_y = 0, 0
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=sampling_rate,
-                              threshold=0, rising_event=event, falling_event=None, data_type='l')
+                              threshold=threshold, rising_event=event, falling_event=None, data_type='l')
         self.crossing_direction = True  # to conform to the Analog_input syntax
 
     @property
