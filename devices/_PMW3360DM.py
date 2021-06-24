@@ -263,7 +263,7 @@ class MotionDetector(Analog_input):
         self.delta_y_mv = self.motionBuffer_mv[2:]
         self.delta_x, self.delta_y = 0, 0
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=sampling_rate,
-                              threshold=threshold, rising_event=event, falling_event=None, data_type='l')
+                              threshold=0, rising_event=event, falling_event=None, data_type='l')
 
     @property
     def threshold(self):
@@ -299,7 +299,7 @@ class MotionDetector(Analog_input):
                         interrupt_queue.put(self.ID)
         if self.recording:
             self.write_index = (self.write_index + 1) % self.buffer_size
-            if self.write_index == 0: # Buffer full, switch buffers.
+            if self.write_index == 0:  # Buffer full, switch buffers.
                 self.write_buffer = 1 - self.write_buffer
                 self.buffer_start_times[self.write_buffer] = fw.current_time
                 stream_data_queue.put(self.ID)
