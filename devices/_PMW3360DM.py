@@ -257,7 +257,7 @@ class MotionDetector(Analog_input):
         """
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor.power_up()
-        self._threshold = (threshold / 2.54 * self.sensor.CPI) ** 2
+        self.threshold = threshold
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
