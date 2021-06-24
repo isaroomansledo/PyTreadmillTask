@@ -271,3 +271,22 @@ class MotionDetector(Analog_input):
         self.delta_x += twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
 
         return self.motionBuffer
+
+    def _timer_ISR(self, t):
+        # Read a sample to the buffer, update write index.
+        self.buffers[self.write_buffer][self.write_index] = self.read_sample()
+        if self.threshold_active:
+            new_above_threshold = self.buffers[self.write_buffer][self.write_index] > self.threshold
+            if new_above_threshold != self.above_threshold: # Threshold crossing.
+                self.above_threshold = new_above_threshold
+                if ((    self.above_threshold and self.rising_event_ID) or 
+                    (not self.above_threshold and self.falling_event_ID)):
+                        self.timestamp = fw.current_time
+                        self.crossing_direction = self.above_threshold
+                        interrupt_queue.put(self.ID)
+        if self.recording:
+            self.write_index = (self.write_index + 1) % self.buffer_size
+            if self.write_index == 0: # Buffer full, switch buffers.
+                self.write_buffer = 1 - self.write_buffer
+                self.buffer_start_times[self.write_buffer] = fw.current_time
+                stream_data_queue.put(self.ID)
