@@ -255,8 +255,8 @@ class MotionDetector(Analog_input):
         self.delta_x_H_mv = self.motionBuffer_mv[0:1]
         self.delta_y_L_mv = self.motionBuffer_mv[3:]
         self.delta_y_H_mv = self.motionBuffer_mv[2:3]
-        self.delta_x_mv   = self.motionBuffer_mv[0:2]
-        self.delta_y_mv   = self.motionBuffer_mv[2:]
+        self.delta_x_mv = self.motionBuffer_mv[0:2]
+        self.delta_y_mv = self.motionBuffer_mv[2:]
         self.delta_x, self.delta_y = 0, 0
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=event, falling_event=None, data_type='l')
@@ -285,14 +285,17 @@ class MotionDetector(Analog_input):
         self.sensor.read_register_buff(b'\x05', self.delta_y_L_mv)
         self.sensor.read_register_buff(b'\x06', self.delta_y_H_mv)
 
-        self.delta_y += twos_comp(int.from_bytes(self.delta_y_mv, 'big'))
-        self.delta_x += twos_comp(int.from_bytes(self.delta_x_mv, 'big'))
+        self._delta_y = int.from_bytes(self.delta_y_mv, 'big')
+        self._delta_x = int.from_bytes(self.delta_x_mv, 'big')
+
+        self.delta_y += twos_comp(self._delta_y)
+        self.delta_x += twos_comp(self._delta_x)
 
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
         self.read_sample()
-        #self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer, 'big')
-        self.buffers[self.write_buffer][self.write_index] = (self.delta_x << 16) | self.delta_y
+        # self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer, 'big')
+        self.buffers[self.write_buffer][self.write_index] = (self._delta_x << 16) | self._delta_y
         if self.threshold_active:
             if self.delta_x**2 + self.delta_y**2 >= self._threshold:
                 self.reset_delta()
