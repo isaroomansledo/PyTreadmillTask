@@ -138,7 +138,7 @@ class PMW3360DM():
 
         # CONFIGURATION
         # set initial CPI resolution
-        self.write_register(0x0f, 0x31)  # CPI setting=5000
+        self.write_register(0x0f, 0x00)  # CPI setting 0x31=5000; 0x00=100
         # set lift detection
         self.write_register(0x63, 0x03)  # Lift detection: +3mm
         self.CPI = int.from_bytes(self.read_register(0x0f), 'little') * 100 + 100
