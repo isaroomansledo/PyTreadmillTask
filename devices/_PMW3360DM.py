@@ -2,7 +2,6 @@ import utime, machine, math
 from pyControl.hardware import *
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
-
 def twos_comp(val, bits=16):
     """compute the 2's complement of int value val"""
     if (val & (1 << (bits - 1))) != 0:  # if sign bit is set e.g., 8bit: 128-255
@@ -244,20 +243,26 @@ class MotionDetector(Analog_input):
         name: name of the analog signal which will be streamed to the PC
         threshold: in centimeters, distance travelled longer than THRESHOLD triggers an event,
         under the hood, THRESHOLD is saved as the square of the movement counts.
-        """
+        """     
         self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor.power_up()
         self.threshold = threshold
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
-        self.delta_x_H_mv = self.motionBuffer_mv[0:1]
+        # self.delta_x_L_mv = self.motionBuffer_mv[1:2]
+        # self.delta_x_H_mv = self.motionBuffer_mv[0:1]
+        # self.delta_y_L_mv = self.motionBuffer_mv[3:]
+        # self.delta_y_H_mv = self.motionBuffer_mv[2:3]
         self.delta_x_L_mv = self.motionBuffer_mv[1:2]
+        self.delta_x_H_mv = self.motionBuffer_mv[0:1]
         self.delta_y_L_mv = self.motionBuffer_mv[2:3]
         self.delta_y_H_mv = self.motionBuffer_mv[3:]
+
         self.delta_x_mv = self.motionBuffer_mv[0:2]
         self.delta_y_mv = self.motionBuffer_mv[2:]
-        self.buffer_delta_mv = self.motionBuffer_mv[1:3]  # just the low byte of both X and Y
+        
+        self.cheat = self.motionBuffer_mv[1:3]
         self.delta_x, self.delta_y = 0, 0
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=event, falling_event=None, data_type='l')
@@ -295,7 +300,8 @@ class MotionDetector(Analog_input):
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
         self.read_sample()
-        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.buffer_delta_mv, 'big')
+        #self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer_mv, 'big')
+        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.cheat, 'little')
         if self.threshold_active:
             if self.delta_x**2 + self.delta_y**2 >= self._threshold:
                 self.reset_delta()
