@@ -262,7 +262,7 @@ class MotionDetector(Analog_input):
         self.delta_y_H_mv = self.motionBuffer_mv[3:]
 
         self.delta_x_mv = self.motionBuffer_mv[:2]
-        self.delta_y_mv = self.motionBuffer_mv[2:]
+        self.delta_y_mv = self.motionBuffer_mv[2:] # byte order is reversed
         self.xy_mix_mv = self.motionBuffer_mv[1:3]
         self.delta_x, self.delta_y = 0, 0
         # Parent
@@ -293,7 +293,7 @@ class MotionDetector(Analog_input):
         self.sensor.read_register_buff(b'\x05', self.delta_y_L_mv)
         self.sensor.read_register_buff(b'\x06', self.delta_y_H_mv)
 
-        self._delta_y = int.from_bytes(self.delta_y_mv, 'little')
+        self._delta_y = endian_swap(int.from_bytes(self.delta_y_mv, 'little'))
         self._delta_x = int.from_bytes(self.delta_x_mv, 'little')
 
         self.delta_y += twos_comp(self._delta_y)
