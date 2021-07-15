@@ -258,8 +258,8 @@ class MotionDetector(Analog_input):
         self.motionBuffer_mv = memoryview(self.motionBuffer)
         self.delta_x_L_mv = self.motionBuffer_mv[1:2]
         self.delta_x_H_mv = self.motionBuffer_mv[0:1]
-        self.delta_y_L_mv = self.motionBuffer_mv[3:]
-        self.delta_y_H_mv = self.motionBuffer_mv[2:3]
+        self.delta_y_L_mv = self.motionBuffer_mv[2:3]
+        self.delta_y_H_mv = self.motionBuffer_mv[3:]
 
         self.delta_x_mv = self.motionBuffer_mv[:2]
         self.delta_y_mv = self.motionBuffer_mv[2:]
