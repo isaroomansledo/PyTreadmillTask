@@ -296,7 +296,6 @@ class MotionDetector(Analog_input):
     def _timer_ISR(self, t):
         # Read a sample to the buffer, update write index.
         self.read_sample()
-        #self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer_mv, 'big')
         self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.xy_mix_mv, 'little')
         if self.threshold_active:
             if self.delta_x**2 + self.delta_y**2 >= self._threshold:
