@@ -250,10 +250,6 @@ class MotionDetector(Analog_input):
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
-        # self.delta_x_L_mv = self.motionBuffer_mv[1:2]
-        # self.delta_x_H_mv = self.motionBuffer_mv[0:1]
-        # self.delta_y_L_mv = self.motionBuffer_mv[3:]
-        # self.delta_y_H_mv = self.motionBuffer_mv[2:3]
         self.delta_x_L_mv = self.motionBuffer_mv[1:2]
         self.delta_x_H_mv = self.motionBuffer_mv[0:1]
         self.delta_y_L_mv = self.motionBuffer_mv[2:3]
@@ -261,8 +257,8 @@ class MotionDetector(Analog_input):
 
         self.delta_x_mv = self.motionBuffer_mv[0:2]
         self.delta_y_mv = self.motionBuffer_mv[2:]
-        
-        self.cheat = self.motionBuffer_mv[1:3]
+        self.xy_mix_mv = self.motionBuffer_mv[1:3]
+
         self.delta_x, self.delta_y = 0, 0
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=event, falling_event=None, data_type='l')
@@ -291,8 +287,8 @@ class MotionDetector(Analog_input):
         self.sensor.read_register_buff(b'\x05', self.delta_y_L_mv)
         self.sensor.read_register_buff(b'\x06', self.delta_y_H_mv)
 
-        self._delta_y = int.from_bytes(self.delta_y_mv, 'big')
-        self._delta_x = int.from_bytes(self.delta_x_mv, 'big')
+        self._delta_y = int.from_bytes(self.delta_y_mv, 'little')
+        self._delta_x = int.from_bytes(self.delta_x_mv, 'little')
 
         self.delta_y += twos_comp(self._delta_y)
         self.delta_x += twos_comp(self._delta_x)
@@ -301,7 +297,7 @@ class MotionDetector(Analog_input):
         # Read a sample to the buffer, update write index.
         self.read_sample()
         #self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.motionBuffer_mv, 'big')
-        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.cheat, 'little')
+        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.xy_mix_mv, 'little')
         if self.threshold_active:
             if self.delta_x**2 + self.delta_y**2 >= self._threshold:
                 self.reset_delta()
