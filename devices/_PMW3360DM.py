@@ -1,50 +1,58 @@
-import utime, machine
-import pyControl.hardware as _h
+import utime, machine, math
+from pyControl.hardware import *
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
 
 def twos_comp(val, bits=16):
     """compute the 2's complement of int value val"""
-    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
-        val = val - (1 << bits)        # compute negative value
-    return val                         # return positive value as is
+    if (val & (1 << (bits - 1))) != 0:  # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)         # compute negative value
+    return val                          # return positive value as is
+
+
+def endian_swap(val: int):
+    "Swaps byte order. Tested for 2-byte input"
+    return ((val & 0x00ff) << 8) | ((val & 0xff00) >> 8)
 
 
 class PMW3360DM():
     # mouse motion sensor.
     def __init__(self,
                  SPI_type: str,
-                 eventName: str,
-                 reset: str,
-                 MT: str,
+                 eventName: str = None,
+                 reset: str = None,
+                 MT: str = None,
                  CS: str = None,
                  MI: str = None,
                  MO: str = None,
                  SCK: str = None):
 
+        self.MT = MT
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
-        SPIparams = {'baudrate': 1000_000, 'polarity': 1, 'phase': 1,
+        SPIparams = {'baudrate': 1000000, 'polarity': 1, 'phase': 1,
                      'bits': 8, 'firstbit': machine.SPI.MSB}
         if '1' in SPI_type:
             self.SPI = machine.SPI(1, **SPIparams)
-            self.select = _h.Digital_output(pin='W7', inverted=True)
+            self.select = Digital_output(pin='W7', inverted=True)
 
         elif '2' in SPI_type:
             self.SPI = machine.SPI(2, **SPIparams)
-            self.select = _h.Digital_output(pin='W45', inverted=True)
+            self.select = Digital_output(pin='W45', inverted=True)
 
         elif 'soft' in SPI_type.lower():
             self.SPI = machine.SoftSPI(baudrate=500000, polarity=1, phase=0, bits=8, firstbit=machine.SPI.MSB,
                                        sck=machine.Pin(id=SCK, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
                                        mosi=machine.Pin(id=MO, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
                                        miso=machine.Pin(id=MI, mode=machine.Pin.IN))
-            self.select = _h.Digital_output(pin=CS, inverted=True)
+            self.select = Digital_output(pin=CS, inverted=True)
 
-        self.motion = _h.Digital_input(pin=MT, falling_event=eventName, pull='up')
-        self.reset = _h.Digital_output(pin=reset, inverted=True)
+        if MT is not None:
+            self.motion = Digital_input(pin=self.MT, falling_event=eventName, pull='up')
+        if reset is not None:
+            self.reset = Digital_output(pin=reset, inverted=True)
+            self.reset.off()
 
         self.select.off()
-        self.reset.off()
 
     def read_pos(self):
         # write and read Motion register to lock the content of delta registers
@@ -59,8 +67,8 @@ class PMW3360DM():
         delta_x = delta_x_H + delta_x_L
         delta_y = delta_y_H + delta_y_L
 
-        delta_x = int.from_bytes(delta_x, 'big')
-        delta_y = int.from_bytes(delta_y, 'big')
+        delta_x = int.from_bytes(delta_x, 'little')
+        delta_y = int.from_bytes(delta_y, 'little')
 
         delta_x = twos_comp(delta_x)
         delta_y = twos_comp(delta_y)
@@ -73,7 +81,7 @@ class PMW3360DM():
         """
         # ensure MSB=0
         addrs = addrs & 0x7f
-        addrs = addrs.to_bytes(1, 'big')
+        addrs = addrs.to_bytes(1, 'little')
         self.select.on()
         self.SPI.write(addrs)
         utime.sleep_us(100)  # tSRAD
@@ -89,8 +97,8 @@ class PMW3360DM():
         """
         # flip the MSB to 1:
         addrs = addrs | 0x80
-        addrs = addrs.to_bytes(1, 'big')
-        data = data.to_bytes(1, 'big')
+        addrs = addrs.to_bytes(1, 'little')
+        data = data.to_bytes(1, 'little')
         self.select.on()
         self.SPI.write(addrs)
         self.SPI.write(data)
@@ -127,7 +135,7 @@ class PMW3360DM():
         # 6
         self.download_srom(PROGMEM)
         # 7
-        ID = int.from_bytes(self.read_register(0x2a), 'big')
+        ID = int.from_bytes(self.read_register(0x2a), 'little')
         assert ID == 0x04, "bad SROM v={}".format(ID)
         # 8
         # Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design (Enable/Disable Rest mode)
@@ -135,9 +143,10 @@ class PMW3360DM():
 
         # CONFIGURATION
         # set initial CPI resolution
-        self.write_register(0x0f, 0x31)  # CPI setting=5000
+        self.write_register(0x0f, 0x00)  # CPI setting 0x31=5000; 0x00=100
         # set lift detection
         self.write_register(0x63, 0x03)  # Lift detection: +3mm
+        self.CPI = int.from_bytes(self.read_register(0x0f), 'little') * 100 + 100
 
         self.select.off()
 
@@ -159,13 +168,15 @@ class PMW3360DM():
         self.select.off()
         utime.sleep_ms(1)
 
+        self.SPI.deinit()
+
     def download_srom(self, srom):
         self.select.on()
         # flip the MSB to 1:
-        self.SPI.write((0x62 | 0x80) .to_bytes(1, 'big'))
+        self.SPI.write((0x62 | 0x80) .to_bytes(1, 'little'))
         utime.sleep_us(15)
         for srom_byte in srom:
-            self.SPI.write(srom_byte.to_bytes(1, 'big'))
+            self.SPI.write(srom_byte.to_bytes(1, 'little'))
             utime.sleep_us(15)
 
         self.select.off()
@@ -189,7 +200,7 @@ class PMW3360DM():
         # 2
         self.select.on()
         # 3
-        self.SPI.write(0x50 .to_bytes(1, 'big'))
+        self.SPI.write(0x50 .to_bytes(1, 'little'))
         # 4
         utime.sleep_us(35)  # wait for tSRAD_MOTBR
         # 5
@@ -205,3 +216,113 @@ class PMW3360DM():
         delta_y = twos_comp(delta_y)
 
         return delta_x, delta_y
+
+    def read_register_buff(self, addrs: bytes, buff: bytes):
+        """
+        addrs < 128
+        """
+        self.select.on()
+        self.SPI.write(addrs)
+        utime.sleep_us(100)  # tSRAD
+        self.SPI.readinto(buff)
+        utime.sleep_us(1)  # tSCLK-NCS for read operation is 120ns
+        self.select.off()
+        utime.sleep_us(19)  # tSRW/tSRR (=20us) minus tSCLK-NCS
+
+    def write_register_buff(self, addrs: bytes, data: bytes):
+        """
+        addrs < 128
+        """
+        # flip the MSB to 1:...
+        self.select.on()
+        self.SPI.write(addrs)
+        self.SPI.write(data)
+        utime.sleep_us(20)  # tSCLK-NCS for write operation
+        self.select.off()
+        utime.sleep_us(100)  # tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound
+
+
+class MotionDetector(Analog_input):
+    # Quadrature output rotary encoder.
+    def __init__(self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
+        """
+        name: name of the analog signal which will be streamed to the PC
+        threshold: in centimeters, distance travelled longer than THRESHOLD triggers an event,
+        under the hood, THRESHOLD is saved as the square of the movement counts.
+        """
+        self.sensor = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
+        self.sensor.power_up()
+        self.threshold = threshold
+        # Motion sensor variables
+        self.motionBuffer = bytearray(4)
+        self.motionBuffer_mv = memoryview(self.motionBuffer)
+        self.delta_x_L_mv = self.motionBuffer_mv[1:2]
+        self.delta_x_H_mv = self.motionBuffer_mv[0:1]
+        self.delta_y_L_mv = self.motionBuffer_mv[2:3]
+        self.delta_y_H_mv = self.motionBuffer_mv[3:]
+
+        self.delta_x_mv = self.motionBuffer_mv[:2]
+        self.delta_y_mv = self.motionBuffer_mv[2:]  # byte order is reversed
+        self.xy_mix_mv = self.motionBuffer_mv[1:3]
+        self.delta_x, self.delta_y = 0, 0
+        # Parent
+        Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
+                              threshold=threshold, rising_event=event, falling_event=None, data_type='l')
+        self.crossing_direction = True  # to conform to the Analog_input syntax
+
+    @property
+    def threshold(self):
+        "return the value in cms"
+        return math.sqrt(self._threshold) / self.sensor.CPI * 2.54
+
+    @threshold.setter
+    def threshold(self, new_threshold):
+        self._threshold = (new_threshold / 2.54 * self.sensor.CPI)**2
+        self.reset_delta()
+
+    def reset_delta(self):
+        "reset the accumulated position data"
+        self.delta_x, self.delta_y = 0, 0
+
+    def read_sample(self):
+        self.sensor.write_register_buff(b'\x82', b'\x01')
+        self.sensor.read_register_buff(b'\x02', self.delta_x_H_mv)
+
+        self.sensor.read_register_buff(b'\x03', self.delta_x_L_mv)
+        self.sensor.read_register_buff(b'\x04', self.delta_x_H_mv)
+        self.sensor.read_register_buff(b'\x05', self.delta_y_L_mv)
+        self.sensor.read_register_buff(b'\x06', self.delta_y_H_mv)
+
+        self._delta_y = endian_swap(int.from_bytes(self.delta_y_mv, 'little'))
+        self._delta_x = int.from_bytes(self.delta_x_mv, 'little')
+
+        self.delta_y += twos_comp(self._delta_y)
+        self.delta_x += twos_comp(self._delta_x)
+
+    def _timer_ISR(self, t):
+        # Read a sample to the buffer, update write index.
+        self.read_sample()
+        self.buffers[self.write_buffer][self.write_index] = int.from_bytes(self.xy_mix_mv, 'little')
+        if self.threshold_active:
+            if self.delta_x**2 + self.delta_y**2 >= self._threshold:
+                self.reset_delta()
+                self.timestamp = fw.current_time
+                interrupt_queue.put(self.ID)
+        if self.recording:
+            self.write_index = (self.write_index + 1) % self.buffer_size
+            if self.write_index == 0:  # Buffer full, switch buffers.
+                self.write_buffer = 1 - self.write_buffer
+                self.buffer_start_times[self.write_buffer] = fw.current_time
+                stream_data_queue.put(self.ID)
+
+    def _stop_acquisition(self):
+        # Stop sampling analog input values.
+        self.timer.deinit()
+        self.sensor.shut_down()
+        self.acquiring = False
+
+    def _start_acquisition(self):
+        # Start sampling analog input values.
+        self.timer.init(freq=self.sampling_rate)
+        self.timer.callback(self._timer_ISR)
+        self.acquiring = True
