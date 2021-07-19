@@ -39,11 +39,10 @@ class PMW3360DM():
             self.SPI = machine.SPI(2, **SPIparams)
             self.select = Digital_output(pin='W45', inverted=True)
 
-        elif 'soft' in SPI_type.lower():
-            self.SPI = machine.SoftSPI(baudrate=500000, polarity=1, phase=0, bits=8, firstbit=machine.SPI.MSB,
-                                       sck=machine.Pin(id=SCK, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
+        elif 'soft' in SPI_type.lower():  # not tested
+            self.SPI = machine.SoftSPI(sck=machine.Pin(id=SCK, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
                                        mosi=machine.Pin(id=MO, mode=machine.Pin.OUT, pull=machine.Pin.PULL_DOWN),
-                                       miso=machine.Pin(id=MI, mode=machine.Pin.IN))
+                                       miso=machine.Pin(id=MI, mode=machine.Pin.IN), **SPIparams)
             self.select = Digital_output(pin=CS, inverted=True)
 
         if MT is not None:
@@ -184,7 +183,7 @@ class PMW3360DM():
 
     def burst_read(self):
         """
-        Based on Burst mode Page 22
+        Based on Burst mode Page 22 [not tested]
         reads 12 bytes:
         BYTE[00] = Motion    = if the 7th bit is 1, a motion is detected.
             ==> 7 bit: MOT (1 when motion is detected)
