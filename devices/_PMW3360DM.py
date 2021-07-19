@@ -243,7 +243,7 @@ class PMW3360DM():
 
 
 class MotionDetector(Analog_input):
-    # Quadrature output rotary encoder.
+    "Using the Analog_input code to interface with PMW3360DM"
     def __init__(self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
         """
         name: name of the analog signal which will be streamed to the PC
