@@ -1,4 +1,4 @@
-import utime, machine, math
+import utime, machine, math, pyb
 from pyControl.hardware import *
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
@@ -29,7 +29,7 @@ class PMW3360DM():
 
         self.MT = MT
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
-        SPIparams = {'baudrate': 1000000, 'polarity': 1, 'phase': 1,
+        SPIparams = {'baudrate': pyb.freq()[0], 'polarity': 1, 'phase': 1,
                      'bits': 8, 'firstbit': machine.SPI.MSB}
         if '1' in SPI_type:
             self.SPI = machine.SPI(1, **SPIparams)
@@ -101,6 +101,7 @@ class PMW3360DM():
         data = data.to_bytes(1, 'little')
         self.select.on()
         self.SPI.write(addrs)
+
         self.SPI.write(data)
         utime.sleep_us(20)  # tSCLK-NCS for write operation
         self.select.off()
