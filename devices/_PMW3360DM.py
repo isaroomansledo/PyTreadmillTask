@@ -100,7 +100,6 @@ class PMW3360DM():
         data = data.to_bytes(1, 'little')
         self.select.on()
         self.SPI.write(addrs)
-
         self.SPI.write(data)
         utime.sleep_us(20)  # tSCLK-NCS for write operation
         self.select.off()
@@ -256,7 +255,7 @@ class MotionDetector(Analog_input):
         # Motion sensor variables
         self.motionBuffer = bytearray(4)
         self.motionBuffer_mv = memoryview(self.motionBuffer)
-        self.delta_x_L_mv = self.motionBuffer_mv[0:2]
+        self.delta_x_L_mv = self.motionBuffer_mv[1:2]
         self.delta_x_H_mv = self.motionBuffer_mv[0:1]
         self.delta_y_L_mv = self.motionBuffer_mv[2:3]
         self.delta_y_H_mv = self.motionBuffer_mv[3:]
@@ -265,6 +264,7 @@ class MotionDetector(Analog_input):
         self.delta_y_mv = self.motionBuffer_mv[2:]
         self.xy_mix_mv = self.motionBuffer_mv[1:3]
         self.delta_x, self.delta_y = 0, 0
+        self._delta_x, self._delta_y = 0, 0
         # Parent
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=event, falling_event=None, data_type='l')
@@ -277,7 +277,7 @@ class MotionDetector(Analog_input):
 
     @threshold.setter
     def threshold(self, new_threshold):
-        self._threshold = (new_threshold / 2.54 * self.sensor.CPI)**2
+        self._threshold = int((new_threshold / 2.54 * self.sensor.CPI)**2)
         self.reset_delta()
 
     def reset_delta(self):
