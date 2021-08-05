@@ -10,7 +10,7 @@ class ParallelOdourRelease():
                  *pins: str):
 
         # PINS should be exactly Ndirections x NstimPerDir strings
-        # specifying the pins! iterating over Direction and Odour
+        # specifying the pins! iterating over Direction and Odour, Odour ==0 is clean air
         assert len(pins) == Ndirections * NstimPerDir, "wrong number of pins!"
 
         self.Ndirections = Ndirections
@@ -28,22 +28,21 @@ class ParallelOdourRelease():
     def all_off(self):
         for dir in range(self.Ndirections):
             for stim in range(self.NstimPerDir):
-                self.__dict__[self._sol_name(dir, stim)].off()
+                getattr(self, self._sol_name(dir, stim)).off()
 
     def clean_air_on(self):
         """
-        Odour ==0 for clean air, for any direction
+        clean air (Odour==0) on everywhere and odourant off.
         """
         for dir in range(self.Ndirections):
-            self.__dict__[self._sol_name(dir, 0)].on()
-            self.__dict__[self._sol_name(dir, 1)].off()
+            getattr(self, self._sol_name(dir, 0)).on()
+            getattr(self, self._sol_name(dir, 1)).off()
 
     def odour_release(self, dir: int):
         for direction in range(self.Ndirections):
             odour = 1 if direction == dir else 0
-
-            self.__dict__[self._sol_name(direction, odour)].on()
-            self.__dict__[self._sol_name(direction, 1 - odour)].off()
+            getattr(self, self._sol_name(direction, odour)).on()
+            getattr(self, self._sol_name(direction, 1 - odour)).off()
 
     @staticmethod
     def _sol_name(dir: int, odour: int) -> str:
