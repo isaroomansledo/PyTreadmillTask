@@ -249,9 +249,10 @@ class one_analog_channel(Analog_input):
         assign_ID(self)
         self.name = name
         self.sampling_rate = sampling_rate
+        self.timer= None 
         #Parent:
         Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
-                              threshold=threshold, rising_event=event, falling_event=None, data_type='l')
+                              threshold=threshold, rising_event=None, falling_event=None, data_type='l')
         self.crossing_direction = True  # to conform to the Analog_input syntax
     
     
@@ -311,7 +312,7 @@ class multiple_analog_channels(IO_object):
     
 #4th class: Super class, gets data from the 2 sensors and links it to the 2 channels so the computer can get the data.
 class two_sensors (multiple_analog_channels):
-    def __init__(self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
+    def __init__(self, name, reset, threshold=10, sampling_rate=300, event='motion'):
     #Creating 2 sensors 
         self.sensor_1= PMW3360DM(SPI_type='SPI1', eventName='', reset=reset)
         self.sensor_1.power_up()
@@ -334,7 +335,7 @@ class two_sensors (multiple_analog_channels):
         
 
     #Parent (multiple_analog_channels)
-    multiple_analog_channels.__init__(self,sampling_rate=500)
+    multiple_analog_channels.__init__(self,sampling_rate)
 
     @property
     def threshold(self):
