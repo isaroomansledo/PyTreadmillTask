@@ -384,7 +384,7 @@ class two_sensors (multiple_analog_channels):
         "reset the accumulated position data"
         self.delta_x, self.delta_y = 0, 0
 
-    def read_sample():
+    def read_sample(self):
      #Mouse sensor 1:
         self.sensor_1.write_register_buff(b'\x82', b'\x01')
         self.sensor_1.read_register_buff(b'\x02', self.delta_x1_H_mv)
@@ -415,7 +415,7 @@ class two_sensors (multiple_analog_channels):
         self.delta_x2 += twos_comp(self._delta_x2)
     
     def timer_ISR(self,t):
-        self.read_sample() #Lo puedo poner solo una vez pq en mi funcion incluyo los dos sensors, esta bien?
+        self.read_sample() 
         self.channel_1.send_info (int.from_bytes(self.xy1_mix_mv,'little'),self._threshold,self.delta_x1,self.delta_y1)
         self.channel_2.send_info(int.from_bytes(self.xy2_mix_mv,'little'),self._threshold,self.delta_x2,self.delta_y2)
 
