@@ -27,9 +27,7 @@ class PMW3360DM():
                  MI: str = None,
                  MO: str = None,
                  SCK: str = None):
-                 self.MT = MT
-
-        
+        self.MT = MT
         # SPI_type = 'SPI1' or 'SPI2' or 'softSPI'
         SPIparams = {'baudrate': 1000000, 'polarity': 1, 'phase': 1,
                      'bits': 8, 'firstbit': machine.SPI.MSB}
@@ -272,7 +270,7 @@ class one_analog_channel(Analog_input):
         self.crossing_direction = True 
 
         #Parent:
-         Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
+        Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=event, falling_event=None, data_type='l')
         self.crossing_direction = True  # to conform to the Analog_input syntax
     
@@ -292,7 +290,7 @@ class one_analog_channel(Analog_input):
         self.buffers[self.write_buffer][self.write_index] = data
         self.write_index = (self.write_index + 1) % self.buffer_size
 
-         if self.threshold_active:
+        if self.threshold_active:
             if self.delta_x**2 + self.delta_y**2 >= self.threshold:
                 self.reset_delta()
                 self.timestamp = fw.current_time
@@ -304,7 +302,7 @@ class one_analog_channel(Analog_input):
             self.buffer_start_times[self.write_buffer] = fw.current_time
             stream_data_queue.put(self.ID)
 
-     def _initialise(self):
+    def _initialise(self):
         pass
 
 #3rd class: Class that creates multiple channels (2 for now )
@@ -333,14 +331,12 @@ class multiple_analog_channels(IO_object):
     
 #4th class: Super class, gets data from the 2 sensors and links it to the 2 channels so the computer can get the data.
 class two_sensors (multiple_analog_channels):
-    def__init__ (self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
-
+    def __init__(self, name, reset, threshold=10, sampling_rate=1000, event='motion'):
     #Creating 2 sensors 
         self.sensor_1= PMW3360DM(SPI_type='SPI1', eventName='', reset=reset)
         self.sensor_2= PMW3360DM(SPI_type='SPI2', eventName='', reset=reset) 
         self.sensor_1.power_up()
         self.sensor_2.power_up()
-        
         self.threshold = threshold
     #Storing data from sensors:
       # Motion sensor1 variables
@@ -374,7 +370,7 @@ class two_sensors (multiple_analog_channels):
     #Parent (multiple_analog_channels)
     multiple_analog_channels.__init__(self,sampling_rate)
 
-       @property
+    @property
     def threshold(self):
         "return the value in cms"
         return math.sqrt(self._threshold) / self.sensor_1.CPI * 2.54
