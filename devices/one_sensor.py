@@ -1,7 +1,7 @@
 import pyb, utime, machine, math
 from array import array
 
-from pyControl.hardware import*
+from pyControl.hardware import *
 from devices.PMW3360DM_srom_0x04 import PROGMEM
 
 def twos_comp(val, bits=16):
@@ -245,20 +245,21 @@ class PMW3360DM():
 class one_analog_channel(Analog_input):
 
     def __init__(self,name,sampling_rate,threshold):
-
-        #assign_ID(self)
         self.name = name
+        # assign_ID(self)
+       
         self.sampling_rate = sampling_rate
-        self.timer= None 
+       
+        self.timer= None
         #Parent:
-        Analog_input.__init__(self, pin=None, name=name, sampling_rate=int(sampling_rate),
+        Analog_input.__init__(self, pin=None,name=name,sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=None, falling_event=None, data_type='l')
         self.crossing_direction = True  # to conform to the Analog_input syntax
-    
-    
+   
+   
     def _run_start(self):
         self.write_buffer = 0 # Buffer to write new data to.
-        self.write_index  = 0 # Buffer index to write new data to. 
+        self.write_index  = 0 # Buffer index to write new data to.
         self.buffer_start_times[self.write_buffer] = 0
 
     def _run_stop(self):
@@ -289,15 +290,14 @@ class one_analog_channel(Analog_input):
 #3rd class: Class that creates multiple channels (2 for now )
 
 class multiple_analog_channels(IO_object):
-    def __init__(self, name, sampling_rate,threshold):
-        assign_ID(self)
-        self.name=name
+    def __init__(self, name, sampling_rate, threshold):
+        self.name = name
         self.sampling_rate = sampling_rate
-        self.threshold=threshold
+        self.threshold = threshold
         self.timer = pyb.Timer(available_timers.pop())
-        #Creating 2 channels, each one will carry information from one of the sensors to the computer 
-        self.channel_1 = one_analog_channel(name, self.sampling_rate,self.threshold) 
-       
+        #Creating 2 channels, each one will carry information from one of the sensors to the computer
+        self.channel_1 = one_analog_channel(name,self.sampling_rate,self.threshold)
+        assign_ID(self)
 
     def _run_start(self):
         self.timer.init(freq=self.sampling_rate)
@@ -309,35 +309,33 @@ class multiple_analog_channels(IO_object):
     def timer_ISR(self, t):
         # Transfer data to the channels. At this stage no data yet so this timer_ISR will need to be overwritten in the other class
         self.channel_1.send_info(0)
-        
 
-    
+   
 #4th class: Super class, gets data from the 2 sensors and links it to the 2 channels so the computer can get the data.
 class two_sensors (multiple_analog_channels):
-    def __init__(self, name1, reset, threshold=10, sampling_rate=100, event='motion'):
-    #Creating 2 sensors 
-        self.sensor_1= PMW3360DM(SPI_type='SPI1', eventName='', reset=reset)
+    def __init__(self,name1,reset, threshold=10, sampling_rate=300, event='motion'):
+    #Creating 2 sensors
+        self.sensor_1 = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor_1.power_up()
-        
         self.threshold = threshold
     #Storing data from sensors:
       # Motion sensor1 variables
         self.motionBuffer1 = bytearray(4)
-        self.motionBuffer1_mv = memoryview(self.motionBuffer)
+        self.motionBuffer1_mv = memoryview(self.motionBuffer1)
         self.delta_x1_L_mv = self.motionBuffer1_mv[1:2]
         self.delta_x1_H_mv = self.motionBuffer1_mv[0:1]
         self.delta_y1_L_mv = self.motionBuffer1_mv[2:3]
         self.delta_y1_H_mv = self.motionBuffer1_mv[3:]
-        
+       
         self.delta_x1_mv = self.motionBuffer1_mv[:2]  # byte order is reversed
         self.delta_y1_mv = self.motionBuffer1_mv[2:]
         self.xy1_mix_mv = self.motionBuffer1_mv[1:3]
         self.delta_x1, self.delta_y1 = 0, 0
         self._delta_x1, self._delta_y1 = 0, 0
-        
+     
 
     #Parent (multiple_analog_channels)
-    multiple_analog_channels.__init__(self,name1,sampling_rate,threshold)
+        multiple_analog_channels.__init__(self, name1, sampling_rate, threshold)
 
     @property
     def threshold(self):
@@ -367,13 +365,19 @@ class two_sensors (multiple_analog_channels):
 
         self.delta_y1 += twos_comp(self._delta_y1)
         self.delta_x1 += twos_comp(self._delta_x1)
-    
-    
-    
+   
     def timer_ISR(self,t):
-        self.read_sample() 
+        self.read_sample()
         self.channel_1.send_info (int.from_bytes(self.xy1_mix_mv,'little'),self._threshold,self.delta_x1,self.delta_y1)
-    
+
+    def record(self):
+        # Start streaming data to computer.
+        if not self.recording:
+            self.write_index = 0  # Buffer index to write new data to.
+            self.buffer_start_times[self.write_buffer] = fw.current_time
+            self.recording = True
+            if not self.acquiring: self._start_acquisition()
+
     def _stop_acquisition(self):
         # Stop sampling analog input values.
         self.timer.deinit()
@@ -385,4 +389,3 @@ class two_sensors (multiple_analog_channels):
         self.timer.init(freq=self.sampling_rate)
         self.timer.callback(self.timer_ISR)
         self.acquiring = True
-
