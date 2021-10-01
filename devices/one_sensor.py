@@ -244,9 +244,9 @@ class PMW3360DM():
 
 class one_analog_channel(Analog_input):
 
-    def __init__(self,name,sampling_rate):
+    def __init__(self,name,sampling_rate,threshold):
 
-        assign_ID(self)
+        #assign_ID(self)
         self.name = name
         self.sampling_rate = sampling_rate
         self.timer= None 
@@ -289,30 +289,32 @@ class one_analog_channel(Analog_input):
 #3rd class: Class that creates multiple channels (2 for now )
 
 class multiple_analog_channels(IO_object):
-    def __init__(self, sampling_rate):
+    def __init__(self, name, sampling_rate,threshold):
         assign_ID(self)
+        self.name=name
         self.sampling_rate = sampling_rate
+        self.threshold=threshold
         self.timer = pyb.Timer(available_timers.pop())
         #Creating 2 channels, each one will carry information from one of the sensors to the computer 
-        self.channel_1 = one_analog_channel('Channel 1', self.sampling_rate) 
+        self.channel_1 = one_analog_channel(name, self.sampling_rate,self.threshold) 
        
 
     def _run_start(self):
         self.timer.init(freq=self.sampling_rate)
-        self.timer.callback(self._timer_ISR)
+        self.timer.callback(self.timer_ISR)
 
     def _run_stop(self):
         self.timer.deinit()
 
-    def _timer_ISR(self, t):
+    def timer_ISR(self, t):
         # Transfer data to the channels. At this stage no data yet so this timer_ISR will need to be overwritten in the other class
         self.channel_1.send_info(0)
-        self.channel_2.send_info(0)
+        
 
     
 #4th class: Super class, gets data from the 2 sensors and links it to the 2 channels so the computer can get the data.
 class two_sensors (multiple_analog_channels):
-    def __init__(self, name, reset, threshold=10, sampling_rate=300, event='motion'):
+    def __init__(self, name1, reset, threshold=10, sampling_rate=100, event='motion'):
     #Creating 2 sensors 
         self.sensor_1= PMW3360DM(SPI_type='SPI1', eventName='', reset=reset)
         self.sensor_1.power_up()
@@ -335,7 +337,7 @@ class two_sensors (multiple_analog_channels):
         
 
     #Parent (multiple_analog_channels)
-    multiple_analog_channels.__init__(self,sampling_rate)
+    multiple_analog_channels.__init__(self,name1,sampling_rate,threshold)
 
     @property
     def threshold(self):
@@ -375,12 +377,12 @@ class two_sensors (multiple_analog_channels):
     def _stop_acquisition(self):
         # Stop sampling analog input values.
         self.timer.deinit()
-        self.sensor.shut_down()
+        self.sensor_1.shut_down()
         self.acquiring = False
 
     def _start_acquisition(self):
         # Start sampling analog input values.
         self.timer.init(freq=self.sampling_rate)
-        self.timer.callback(self._timer_ISR)
+        self.timer.callback(self.timer_ISR)
         self.acquiring = True
 
