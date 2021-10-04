@@ -247,15 +247,15 @@ class one_analog_channel(Analog_input):
     def __init__(self,name,sampling_rate,threshold):
         self.name = name
         # assign_ID(self)
-       
         self.sampling_rate = sampling_rate
-       
-        self.timer= None
+        
+          
         #Parent:
         Analog_input.__init__(self, pin=None,name=name,sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=None, falling_event=None, data_type='l')
         self.crossing_direction = True  # to conform to the Analog_input syntax
-   
+        #Overrides my analog input. I don't want a timer for each channel but a common timer instantiated in the super class.
+        self.timer.deinit()
    
     def _run_start(self):
         self.write_buffer = 0 # Buffer to write new data to.
@@ -285,7 +285,7 @@ class one_analog_channel(Analog_input):
             stream_data_queue.put(self.ID)
 
     def _initialise(self):
-        pass
+        self.threshold_active = True 
 
 #3rd class: Class that creates multiple channels (2 for now )
 
@@ -294,21 +294,22 @@ class multiple_analog_channels(IO_object):
         self.name = name
         self.sampling_rate = sampling_rate
         self.threshold = threshold
-        self.timer = pyb.Timer(available_timers.pop())
+        #Common timer:
+        #self.timer = pyb.Timer(available_timers.pop())
         #Creating 2 channels, each one will carry information from one of the sensors to the computer
         self.channel_1 = one_analog_channel(name,self.sampling_rate,self.threshold)
         assign_ID(self)
 
-    def _run_start(self):
-        self.timer.init(freq=self.sampling_rate)
-        self.timer.callback(self.timer_ISR)
+    #def _run_start(self):
+     #   self.timer.init(freq=self.sampling_rate)
+      #  self.timer.callback(self.timer_ISR)
 
-    def _run_stop(self):
-        self.timer.deinit()
+    #def _run_stop(self):
+     #   self.timer.deinit()
 
-    def timer_ISR(self, t):
+    #def timer_ISR(self, t):
         # Transfer data to the channels. At this stage no data yet so this timer_ISR will need to be overwritten in the other class
-        self.channel_1.send_info(0)
+        #self.channel_1.send_info(0)
 
    
 #4th class: Super class, gets data from the 2 sensors and links it to the 2 channels so the computer can get the data.
@@ -318,6 +319,14 @@ class two_sensors (multiple_analog_channels):
         self.sensor_1 = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor_1.power_up()
         self.threshold = threshold
+        self.recording = False 
+        self.acquiring = False
+        
+        #self.buffers_mv = (memoryview(self.buffers[0]), memoryview(self.buffers[1]))
+        #self.buffer_start_times = array('i', [0,0])
+         #Common timer:
+        self.timer = pyb.Timer(available_timers.pop())
+
     #Storing data from sensors:
       # Motion sensor1 variables
         self.motionBuffer1 = bytearray(4)
@@ -370,12 +379,29 @@ class two_sensors (multiple_analog_channels):
         self.read_sample()
         self.channel_1.send_info (int.from_bytes(self.xy1_mix_mv,'little'),self._threshold,self.delta_x1,self.delta_y1)
 
+    def _initialise(self):
+        # Set event codes for rising and falling events.
+        self.threshold_active = True
+
+    def _run_start(self):
+        self.write_buffer = 0 # Buffer to write new data to.
+        self.write_index  = 0 # Buffer index to write new data to. 
+        #if self.threshold_active: 
+           # self._start_acquisition()
+
+    
+    def _run_stop(self):
+        if self.recording:
+            self.stop()
+        if self.acquiring:
+            self._stop_acquisition()
+
     def record(self):
         # Start streaming data to computer.
         if not self.recording:
-            self.write_index = 0  # Buffer index to write new data to.
-            self.buffer_start_times[self.write_buffer] = fw.current_time
-            self.recording = True
+            self.channel_1.write_index = 0  # Buffer index to write new data to.
+            self.channel_1.buffer_start_times[self.channel_1.write_buffer] = fw.current_time
+            self.channel_1.recording = True
             if not self.acquiring: self._start_acquisition()
 
     def _stop_acquisition(self):
@@ -389,3 +415,4 @@ class two_sensors (multiple_analog_channels):
         self.timer.init(freq=self.sampling_rate)
         self.timer.callback(self.timer_ISR)
         self.acquiring = True
+
