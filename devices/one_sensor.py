@@ -15,7 +15,7 @@ def endian_swap(val: int):
     "Swaps byte order. Tested for 2-byte input"
     return ((val & 0x00ff) << 8) | ((val & 0xff00) >> 8)
 
-#1st Class: General class for a mouse sensor
+#1st Class: General class for a mouse sensor. It is the same code as Mostafa's previous code
 
 class PMW3360DM():
     def __init__(self,
@@ -245,35 +245,24 @@ class PMW3360DM():
 class one_analog_channel(Analog_input):
 
     def __init__(self,name,sampling_rate,threshold):
-        self.name = name
-        # assign_ID(self)
         self.sampling_rate = sampling_rate
        
-         
         #Parent:
         Analog_input.__init__(self, pin=None,name=name,sampling_rate=int(sampling_rate),
                               threshold=threshold, rising_event=None, falling_event=None, data_type='l')
         self.crossing_direction = True  # to conform to the Analog_input syntax
+        self.threshold_active = True
         #Overrides my analog input. I don't want a timer for each channel but a common timer instantiated in the super class.
         self.timer.deinit()
-   
-    def _run_start(self):
-        self.write_buffer = 0 # Buffer to write new data to.
-        self.write_index  = 0 # Buffer index to write new data to.
-        self.buffer_start_times[self.write_buffer] = 0
-
-    def _run_stop(self):
-        if self.write_index != 0:
-            self._send_buffer(self.write_buffer, self.write_index)
-
-
-    def send_info(self, data,threshold,delta_x, delta_y):
+       
+       
+     #This function will send the information to the computer. Data is the xy_mix integer.
+    def send_info(self, data,delta_x, delta_y):
         # Put a sample in the buffer, update write index.
         self.buffers[self.write_buffer][self.write_index] = data
 
-        if self.threshold_active:
-            if self.delta_x**2 + self.delta_y**2 >= self.threshold:
-                self.reset_delta()
+        if self.threshold_active:  #It is always active when there is motion. It has been set to true in the initialise function
+            if delta_x**2 + delta_y**2 >= self.threshold:
                 self.timestamp = fw.current_time
                 interrupt_queue.put(self.ID)
         if self.recording:
@@ -283,47 +272,21 @@ class one_analog_channel(Analog_input):
             self.buffer_start_times[self.write_buffer] = fw.current_time
             stream_data_queue.put(self.ID)
 
-    def _initialise(self):
-        self.threshold_active = True
-
-#3rd class: Class that creates multiple channels (2 for now )
-
-class multiple_analog_channels(IO_object):
-    def __init__(self, name, sampling_rate, threshold):
-        self.name = name
-        self.sampling_rate = sampling_rate
-        self.threshold = threshold
-        #Common timer:
-        #self.timer = pyb.Timer(available_timers.pop())
-        #Creating 2 channels, each one will carry information from one of the sensors to the computer
-        self.channel_1 = one_analog_channel(name,self.sampling_rate,self.threshold)
-        #assign_ID(self)
-
-    #def _run_start(self):
-     #   self.timer.init(freq=self.sampling_rate)
-      #  self.timer.callback(self.timer_ISR)
-
-    #def _run_stop(self):
-     #   self.timer.deinit()
-
-    #def timer_ISR(self, t):
-        # Transfer data to the channels. At this stage no data yet so this timer_ISR will need to be overwritten in the other class
-        #self.channel_1.send_info(0)
-
    
-#4th class: Super class, gets data from the 2 sensors and links it to the 2 channels so the computer can get the data.
-class two_sensors (multiple_analog_channels):
+#3rd class: Super class, gets data from the 2 sensors and links it to the 2 channels so the computer can get the data.
+class two_sensors (IO_object):
     def __init__(self,name1,reset, threshold=10, sampling_rate=300, event='motion'):
     #Creating 2 sensors
+        self.name1 = name1
+        self.sampling_rate = sampling_rate
         self.sensor_1 = PMW3360DM(SPI_type='SPI2', eventName='', reset=reset)
         self.sensor_1.power_up()
         self.threshold = threshold
+        self.channel_1 = one_analog_channel(name1,sampling_rate,self._threshold)
+       
         self.channel_1.recording = False
-        self.channel_2.recording = False 
-        self.acquiring = False
-        self.buffer_start_times = array('i', [0,0])
-        #self.buffers_mv = (memoryview(self.buffers[0]), memoryview(self.buffers[1]))
-        #self.buffer_start_times = array('i', [0,0])
+        self.channel_1.acquiring = False
+       
          #Common timer:
         self.common_timer = pyb.Timer(available_timers.pop())
 
@@ -341,10 +304,6 @@ class two_sensors (multiple_analog_channels):
         self.xy1_mix_mv = self.motionBuffer1_mv[1:3]
         self.delta_x1, self.delta_y1 = 0, 0
         self._delta_x1, self._delta_y1 = 0, 0
-     
-
-    #Parent (multiple_analog_channels)
-        multiple_analog_channels.__init__(self, name1, sampling_rate, threshold)
 
     @property
     def threshold(self):
@@ -352,19 +311,18 @@ class two_sensors (multiple_analog_channels):
         return math.sqrt(self._threshold) / self.sensor_1.CPI * 2.54
 
     @threshold.setter
-    def threshold(self, new_threshold):
+    def threshold(self, new_threshold):    
         self._threshold = int((new_threshold / 2.54 * self.sensor_1.CPI)**2)
         self.reset_delta()
-
+       
     def reset_delta(self):
-        "reset the accumulated position data"
+    #reset the accumulated position data
         self.delta_x, self.delta_y = 0, 0
-
+       
     def read_sample(self):
      #Mouse sensor 1:
         self.sensor_1.write_register_buff(b'\x82', b'\x01')
         self.sensor_1.read_register_buff(b'\x02', self.delta_x1_H_mv)
-
         self.sensor_1.read_register_buff(b'\x03', self.delta_x1_L_mv)
         self.sensor_1.read_register_buff(b'\x04', self.delta_x1_H_mv)
         self.sensor_1.read_register_buff(b'\x05', self.delta_y1_L_mv)
@@ -377,63 +335,37 @@ class two_sensors (multiple_analog_channels):
    
     def timer_ISR(self,t):
         self.read_sample()
-        self.channel_1.send_info (int.from_bytes(self.xy1_mix_mv,'little'),self._threshold,self.delta_x1,self.delta_y1)
+        self.channel_1.send_info(int.from_bytes(self.xy1_mix_mv,'little'),self.delta_x1,self.delta_y1) #Sends all of the data integers recorded by the sensor through the channel to the computer
+        self.reset_delta()
 
-    # def _initialise(self):
-        # # Set event codes for rising and falling events.
-        # self.threshold_active = True
+    def _initialise(self):
+        pass
 
-    # def _run_start(self):
-        # self.write_buffer = 0 # Buffer to write new data to.
-        # self.write_index  = 0 # Buffer index to write new data to.
-        # #if self.threshold_active:
-           # # self._start_acquisition()
+    def _run_start(self):
+        pass
    
     def _run_stop(self):
-        if self.recording:
+        if self.channel_1.recording:
             self.channel_1.stop()
-        if self.acquiring:
+        if self.channel_1.acquiring:
             self._stop_acquisition()
 
     def record(self):
         # Start streaming data to computer.
-        
         self.channel_1.write_buffer = 0
         self.channel_1.write_index = 0  # Buffer index to write new data to.
         self.channel_1.buffer_start_times[self.channel_1.write_buffer] = fw.current_time
         self.channel_1.recording = True
-        if not self.acquiring: self._start_acquisition()
+        if not self.channel_1.acquiring: self._start_acquisition()
 
     def _stop_acquisition(self):
         # Stop sampling analog input values.
         self.common_timer.deinit()
         self.sensor_1.shut_down()
-        self.acquiring = False
+        self.channel_1.acquiring = False
 
     def _start_acquisition(self):
         # Start sampling analog input values.
         self.common_timer.init(freq=self.sampling_rate)
         self.common_timer.callback(self.timer_ISR)
-        self.acquiring = True
-       
-   
-    # def stop(self):
-        # # Stop streaming data to computer.
-        # if self.recording:
-            # if self.write_index != 0:
-                # self._send_buffer(self.write_buffer, self.write_index)
-            # self.recording = False
-   
-    # def _send_buffer(self, buffer_n, n_samples=False):
-        # # Send specified buffer to host computer.
-        # n_bytes = self.bytes_per_sample*n_samples if n_samples else self.bytes_per_sample*self.buffer_size
-        # self.data_header[6:8]  = n_bytes.to_bytes(2,'little')
-        # self.data_header[8:12] = self.buffer_start_times[buffer_n].to_bytes(4,'little')
-        # checksum = sum(self.buffers_mv[buffer_n][:n_samples] if n_samples else self.buffers[buffer_n])
-        # checksum += sum(self.data_header[1:12])
-        # self.data_header[12:14] = checksum.to_bytes(2,'little')
-        # fw.usb_serial.write(self.data_header)
-        # if n_samples: # Send first n_samples from buffer.
-            # fw.usb_serial.send(self.buffers_mv[buffer_n][:n_samples])
-        # else: # Send entire buffer.
-            # fw.usb_serial.send(self.buffers[buffer_n])
+        self.channel_1.acquiring = True
