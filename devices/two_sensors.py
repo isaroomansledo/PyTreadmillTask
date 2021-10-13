@@ -257,12 +257,12 @@ class one_analog_channel(Analog_input):
        
        
      #This function will send the information to the computer. Data is the xy_mix integer.
-    def send_info(self, data,delta_x, delta_y):
+    def send_info(self, data, delta_x, delta_y):
         # Put a sample in the buffer, update write index.
         self.buffers[self.write_buffer][self.write_index] = data
 
         if self.threshold_active:  #It is always active when there is motion. It has been set to true in the initialise function
-            if delta_x**2 + delta_y**2 >= self.threshold:
+            if delta_x**2 + delta_y**2 >= self.threshold:    
                 self.timestamp = fw.current_time
                 interrupt_queue.put(self.ID)
         if self.recording:
@@ -311,7 +311,7 @@ class two_sensors (IO_object):
         self._delta_x1, self._delta_y1 = 0, 0
 
 
-        # Motion sensor1 variables
+        # Motion sensor2 variables
         self.motionBuffer2 = bytearray(4)
         self.motionBuffer2_mv = memoryview(self.motionBuffer2)
         self.delta_x2_L_mv = self.motionBuffer2_mv[1:2]
@@ -354,7 +354,7 @@ class two_sensors (IO_object):
         self.delta_y1 += twos_comp(self._delta_y1)
         self.delta_x1 += twos_comp(self._delta_x1)
 
-         #Mouse sensor 1:
+         #Mouse sensor 2:
         self.sensor_2.write_register_buff(b'\x82', b'\x01')
         self.sensor_2.read_register_buff(b'\x02', self.delta_x2_H_mv)
         self.sensor_2.read_register_buff(b'\x03', self.delta_x2_L_mv)
@@ -370,7 +370,7 @@ class two_sensors (IO_object):
     def timer_ISR(self,t):
         self.read_sample()
         self.channel_1.send_info(int.from_bytes(self.xy1_mix_mv,'little'),self.delta_x1,self.delta_y1) #Sends all of the data integers recorded by the sensor through the channel to the computer
-        self.channel_2.send_info(int.from_bytes(self.xy2_mix_mv,'little'),self.delta_x2,self.delta_y2) #Sends all of the data integers recorded by the sensor through the channel to the computer
+        self.channel_2.send_info(int.from_bytes(self.xy2_mix_mv,'little'),self.delta_x2,self.delta_y2) 
         self.reset_delta()
 
     def _initialise(self):
